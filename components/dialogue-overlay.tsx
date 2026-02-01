@@ -7,6 +7,7 @@ import {
   onDialogueOpen,
 } from "../game/events/dialogue-events";
 import type { DialogueOpenDetail } from "../game/events/dialogue-events";
+import { appendConversationEntry } from "../game/logs/conversation-log";
 
 export function DialogueOverlay(): JSX.Element | null {
   const [activeSession, setActiveSession] = useState<DialogueSession | null>(null);
@@ -14,8 +15,14 @@ export function DialogueOverlay(): JSX.Element | null {
 
   useEffect(() => {
     const unsubscribe = onDialogueOpen((detail) => {
-      setActiveSession(createDialogueSession(detail));
+      const greeting = createGreeting(detail.npcName);
+      setActiveSession(createDialogueSession(detail, greeting));
       setInputValue("");
+      appendConversationEntry({
+        npcId: detail.npcId,
+        speaker: "npc",
+        text: greeting,
+      });
     });
 
     return unsubscribe;
@@ -32,7 +39,18 @@ export function DialogueOverlay(): JSX.Element | null {
     const trimmedInput = inputValue.trim();
     if (!trimmedInput) return;
 
-    const nextSession = createPlayerReply(activeSession, trimmedInput);
+    const npcReply = createNpcReply(activeSession.npcName, trimmedInput);
+    appendConversationEntry({
+      npcId: activeSession.npcId,
+      speaker: "player",
+      text: trimmedInput,
+    });
+    appendConversationEntry({
+      npcId: activeSession.npcId,
+      speaker: "npc",
+      text: npcReply,
+    });
+    const nextSession = createPlayerReply(activeSession, trimmedInput, npcReply);
     setActiveSession(nextSession);
     setInputValue("");
   }
@@ -100,7 +118,7 @@ export function DialogueOverlay(): JSX.Element | null {
   );
 }
 
-function createDialogueSession(detail: DialogueOpenDetail): DialogueSession {
+function createDialogueSession(detail: DialogueOpenDetail, greeting: string): DialogueSession {
   return {
     npcId: detail.npcId,
     npcName: detail.npcName,
@@ -112,13 +130,17 @@ function createDialogueSession(detail: DialogueOpenDetail): DialogueSession {
       {
         id: createLineId(),
         speaker: "npc",
-        text: createGreeting(detail.npcName),
+        text: greeting,
       },
     ],
   };
 }
 
-function createPlayerReply(session: DialogueSession, playerText: string): DialogueSession {
+function createPlayerReply(
+  session: DialogueSession,
+  playerText: string,
+  npcReply: string
+): DialogueSession {
   const nextLines = [
     ...session.lines,
     {
@@ -129,7 +151,7 @@ function createPlayerReply(session: DialogueSession, playerText: string): Dialog
     {
       id: createLineId(),
       speaker: "npc",
-      text: createNpcReply(session.npcName, playerText),
+      text: npcReply,
     },
   ];
 

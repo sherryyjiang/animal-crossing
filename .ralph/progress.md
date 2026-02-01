@@ -141,3 +141,8 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-01 21:21:34
 **Session 9 started** (model: gpt-5.2-codex)
+
+### 2026-02-01 21:32:18
+- Added in-memory conversation logging per NPC/day in `game/logs/conversation-log.ts`.
+- Wired dialogue overlay to record greetings, player lines, and NPC replies.
+- Checked off the conversation logging criterion in `RALPH_TASK.md`.
