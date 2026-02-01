@@ -44,3 +44,7 @@ This is how Ralph maintains continuity across iterations.
 ### 2026-02-01 21:47:19
 - Summarized Phaser camera/collision/interaction best practices in `docs/phaser-interaction-notes.md`.
 - Checked off the Phaser best practices criterion in `RALPH_TASK.md`.
+
+### 2026-02-01 21:57:03
+- Gathered visual references and summarized cues in `docs/visual-references.md`.
+- Checked off the visual references criterion in `RALPH_TASK.md`.
