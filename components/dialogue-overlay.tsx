@@ -7,13 +7,17 @@ import {
   onDialogueOpen,
 } from "../game/events/dialogue-events";
 import type { DialogueOpenDetail } from "../game/events/dialogue-events";
-import { appendConversationEntry } from "../game/logs/conversation-log";
+import {
+  appendConversationEntry,
+  initializeConversationLog,
+} from "../game/logs/conversation-log";
 
 export function DialogueOverlay(): JSX.Element | null {
   const [activeSession, setActiveSession] = useState<DialogueSession | null>(null);
   const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
+    void initializeConversationLog();
     const unsubscribe = onDialogueOpen((detail) => {
       const greeting = createGreeting(detail.npcName);
       setActiveSession(createDialogueSession(detail, greeting));

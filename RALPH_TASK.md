@@ -38,7 +38,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Add four NPCs with idle animations and location signage. <!-- group: 4 -->
 - [x] Build dialogue UI overlay with input + continue flow. <!-- group: 5 -->
 - [x] Implement conversation logging per NPC/day. <!-- group: 5 -->
-- [ ] Implement local storage layer (IndexedDB + fallback). <!-- group: 6 -->
+- [x] Implement local storage layer (IndexedDB + fallback). <!-- group: 6 -->
 - [ ] Implement memory extraction + salience scoring pipeline. <!-- group: 6 -->
 - [ ] Implement memory retrieval + NPC personality prompts. <!-- group: 6 -->
 - [ ] Implement LLM adapter + model configuration switching. <!-- group: 6 -->

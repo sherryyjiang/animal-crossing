@@ -152,3 +152,8 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-01 21:24:02
 **Session 10 started** (model: gpt-5.2-codex)
+
+### 2026-02-01 21:42:18
+- Implemented IndexedDB/localStorage storage adapter with migration in `game/storage/local-store.ts`.
+- Hydrated and persisted conversation log entries using the storage layer.
+- Checked off the local storage criterion in `RALPH_TASK.md`.
