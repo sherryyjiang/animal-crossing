@@ -186,3 +186,9 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-01 21:41:10
 **Session 14 started** (model: gpt-5.2-codex)
+
+### 2026-02-01 22:05:40
+- Implemented memory retrieval scoring and NPC personality prompts in `game/memory/`.
+- Added memory-aware greetings and replies in `components/dialogue-overlay.tsx`.
+- Checked off the memory retrieval criterion in `RALPH_TASK.md`.
+- Tests: `npm test` (fails: no test specified).

@@ -54,6 +54,12 @@ export function getEntriesForNpcDay(npcId: string, dayIndex = activeDayIndex) {
   return conversationEntries.filter((entry) => entry.npcId === npcId && entry.dayIndex === dayIndex);
 }
 
+export function getRecentEntriesForNpc(npcId: string, limit = 6) {
+  const entries = conversationEntries.filter((entry) => entry.npcId === npcId);
+  if (entries.length <= limit) return entries;
+  return entries.slice(entries.length - limit);
+}
+
 export function clearConversationEntries() {
   conversationEntries.length = 0;
   void clearStoredConversationEntries();

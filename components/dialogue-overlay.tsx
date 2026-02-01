@@ -13,26 +13,41 @@ import {
 } from "../game/logs/conversation-log";
 import { extractAndStoreMemories } from "../game/memory/memory-pipeline";
 import { initializeMemoryStore } from "../game/memory/memory-store";
+import { buildNpcMemoryContext } from "../game/memory/memory-retrieval";
+import type { NpcMemoryContext } from "../game/memory/memory-retrieval";
+import type { MemoryFact } from "../game/memory/memory-types";
 
 export function DialogueOverlay(): JSX.Element | null {
   const [activeSession, setActiveSession] = useState<DialogueSession | null>(null);
   const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
     void initializeConversationLog();
     void initializeMemoryStore();
     const unsubscribe = onDialogueOpen((detail) => {
-      const greeting = createGreeting(detail.npcName);
-      setActiveSession(createDialogueSession(detail, greeting));
-      setInputValue("");
-      appendConversationEntry({
-        npcId: detail.npcId,
-        speaker: "npc",
-        text: greeting,
-      });
+      void (async () => {
+        const memoryContext = await buildNpcMemoryContext({
+          npcId: detail.npcId,
+          npcName: detail.npcName,
+          npcRole: detail.npcRole,
+        });
+        if (!isMounted) return;
+        const greeting = createGreeting(detail.npcName, memoryContext);
+        setActiveSession(createDialogueSession(detail, greeting, memoryContext));
+        setInputValue("");
+        appendConversationEntry({
+          npcId: detail.npcId,
+          speaker: "npc",
+          text: greeting,
+        });
+      })();
     });
 
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const isOpen = Boolean(activeSession);
@@ -46,7 +61,7 @@ export function DialogueOverlay(): JSX.Element | null {
     const trimmedInput = inputValue.trim();
     if (!trimmedInput) return;
 
-    const npcReply = createNpcReply(activeSession.npcName, trimmedInput);
+    const npcReply = createNpcReply(activeSession, trimmedInput);
     const playerEntry = appendConversationEntry({
       npcId: activeSession.npcId,
       speaker: "player",
@@ -126,12 +141,17 @@ export function DialogueOverlay(): JSX.Element | null {
   );
 }
 
-function createDialogueSession(detail: DialogueOpenDetail, greeting: string): DialogueSession {
+function createDialogueSession(
+  detail: DialogueOpenDetail,
+  greeting: string,
+  memoryContext: NpcMemoryContext
+): DialogueSession {
   return {
     npcId: detail.npcId,
     npcName: detail.npcName,
     npcRole: detail.npcRole,
     prompt: detail.prompt,
+    memoryContext,
     hasPlayerLine: false,
     hasNpcReply: false,
     lines: [
@@ -171,12 +191,32 @@ function createPlayerReply(
   };
 }
 
-function createGreeting(npcName: string) {
-  return `${npcName} smiles warmly. What would you like to share today?`;
+function createGreeting(npcName: string, memoryContext: NpcMemoryContext) {
+  const recall = formatMemoryRecall(memoryContext.topMemories[0]);
+  const recallLine = recall ? ` ${recall}` : " What would you like to share today?";
+  return `${npcName} ${memoryContext.profile.greetingStyle}${recallLine}`;
 }
 
-function createNpcReply(npcName: string, playerText: string) {
-  return `${npcName} nods. "${playerText}" sounds like a lovely update for the board.`;
+function createNpcReply(session: DialogueSession, playerText: string) {
+  const recall = formatMemoryRecall(session.memoryContext.topMemories[0]);
+  const recallLine = recall ? ` ${recall}` : "";
+  return `${session.npcName} ${session.memoryContext.profile.replyStyle} "${playerText}"${recallLine}`;
+}
+
+function formatMemoryRecall(fact?: MemoryFact) {
+  if (!fact) return "";
+  const sentence = normalizeMemorySentence(fact.content);
+  return `I remember ${lowercaseFirstLetter(sentence)}.`;
+}
+
+function normalizeMemorySentence(content: string) {
+  const sentence = content.replace(/^player /i, "you ");
+  return sentence.replace(/^you feels /i, "you felt ");
+}
+
+function lowercaseFirstLetter(text: string) {
+  if (!text) return text;
+  return text[0].toLowerCase() + text.slice(1);
 }
 
 function createLineId() {
@@ -188,6 +228,7 @@ interface DialogueSession {
   npcName: string;
   npcRole: string;
   prompt: string;
+  memoryContext: NpcMemoryContext;
   hasPlayerLine: boolean;
   hasNpcReply: boolean;
   lines: DialogueLine[];

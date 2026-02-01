@@ -40,7 +40,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Implement conversation logging per NPC/day. <!-- group: 5 -->
 - [x] Implement local storage layer (IndexedDB + fallback). <!-- group: 6 -->
 - [x] Implement memory extraction + salience scoring pipeline. <!-- group: 6 -->
-- [ ] Implement memory retrieval + NPC personality prompts. <!-- group: 6 -->
+- [x] Implement memory retrieval + NPC personality prompts. <!-- group: 6 -->
 - [ ] Implement LLM adapter + model configuration switching. <!-- group: 6 -->
 - [ ] Add day cycle state, end-day gating, and LLM summary modal. <!-- group: 7 -->
 
