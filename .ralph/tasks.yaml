@@ -3,8 +3,8 @@
 # DO NOT EDIT - regenerated on task file change
 
 source_file: RALPH_TASK.md
-source_mtime: 1769951122
-generated_at: 2026-02-01T13:07:16Z
+source_mtime: 1769951406
+generated_at: 2026-02-01T13:10:49Z
 
 tasks:
   - id: "line_18"
@@ -107,7 +107,7 @@ tasks:
     raw_marker: -
   - id: "line_36"
     line_number: 36
-    status: pending
+    status: completed
     parallel_group: 3
     description: Add player movement, collisions, camera follow, and interaction detection.
     indent_level: 0
