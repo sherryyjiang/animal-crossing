@@ -377,6 +377,54 @@ body {
   color: #6b5f5a;
 }
 
+.dev-panel-harness {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dev-panel-harness-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dev-panel-harness-button {
+  flex: 1;
+  min-width: 140px;
+}
+
+.dev-panel-harness-meta {
+  font-size: 12px;
+  color: #8a7f78;
+}
+
+.dev-panel-harness-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.dev-panel-harness-card {
+  background: #f3e7dd;
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dev-panel-harness-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b5f5a;
+}
+
+.dev-panel-harness-subtitle {
+  font-size: 11px;
+  color: #9c8f86;
+}
+
 .dev-panel-list {
   display: flex;
   flex-direction: column;
@@ -424,5 +472,10 @@ body {
 .dev-panel-empty {
   font-size: 12px;
   color: #9c8f86;
+}
+
+.dev-panel-error {
+  font-size: 12px;
+  color: #b36b6b;
 }
 

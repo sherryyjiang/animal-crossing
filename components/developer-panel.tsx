@@ -9,6 +9,8 @@ import { getConversationEntries, initializeConversationLog } from "../game/logs/
 import type { MemoryFact } from "../game/memory/memory-types";
 import { getMemoryFacts, initializeMemoryStore } from "../game/memory/memory-store";
 import { getNpcById, getNpcRoster } from "../game/npc-roster";
+import type { SyntheticChatResult } from "../game/synthetic-chat";
+import { runSyntheticChatHarness } from "../game/synthetic-chat";
 
 const log = debug("ralph:dev-panel");
 
@@ -18,6 +20,11 @@ export function DeveloperPanel(): JSX.Element | null {
   const [filters, setFilters] = useState<DeveloperFilters>({
     selectedDay: "all",
     selectedNpcId: "all",
+  });
+  const [harnessState, setHarnessState] = useState<SyntheticChatState>({
+    isRunning: false,
+    lastResult: null,
+    lastError: null,
   });
 
   const npcRoster = useMemo(() => getNpcRoster(), []);
@@ -74,6 +81,20 @@ export function DeveloperPanel(): JSX.Element | null {
 
   function handleRefresh() {
     setSnapshot(buildSnapshot());
+  }
+
+  function handleHarnessRun(mode: SyntheticHarnessMode) {
+    if (harnessState.isRunning) return;
+    setHarnessState((current) => ({ ...current, isRunning: true, lastError: null }));
+    void runSyntheticChatHarness({ reset: mode === "reset" })
+      .then((result) => {
+        setSnapshot(buildSnapshot());
+        setHarnessState({ isRunning: false, lastResult: result, lastError: null });
+      })
+      .catch((error) => {
+        log("Synthetic chat harness failed %o", { error });
+        setHarnessState({ isRunning: false, lastResult: null, lastError: "Failed to seed synthetic chat." });
+      });
   }
 
   function handleDayChange(value: string) {
@@ -139,6 +160,53 @@ export function DeveloperPanel(): JSX.Element | null {
             </label>
           </div>
           <div className="dev-panel-body">
+            <DeveloperPanelSection title="Synthetic Chat Harness">
+              <div className="dev-panel-harness">
+                <div className="dev-panel-harness-actions">
+                  <button
+                    type="button"
+                    className="dev-panel-action dev-panel-harness-button"
+                    onClick={() => handleHarnessRun("append")}
+                    disabled={harnessState.isRunning}
+                  >
+                    Seed Synthetic Chat
+                  </button>
+                  <button
+                    type="button"
+                    className="dev-panel-action dev-panel-harness-button"
+                    onClick={() => handleHarnessRun("reset")}
+                    disabled={harnessState.isRunning}
+                  >
+                    Reset + Seed
+                  </button>
+                </div>
+                {harnessState.lastResult ? (
+                  <div className="dev-panel-harness-meta">
+                    Seeded day {harnessState.lastResult.dayIndex} · Entries{" "}
+                    {harnessState.lastResult.totalEntries} · Facts{" "}
+                    {harnessState.lastResult.totalFactsAdded}
+                  </div>
+                ) : null}
+                {harnessState.lastResult ? (
+                  <div className="dev-panel-harness-grid">
+                    {harnessState.lastResult.perNpcResults.map((result) => {
+                      const npc = getNpcById(result.npcId);
+                      return (
+                        <div key={result.npcId} className="dev-panel-harness-card">
+                          <div className="dev-panel-harness-title">{npc?.name ?? result.npcId}</div>
+                          <div className="dev-panel-harness-subtitle">
+                            Entries {result.entryCount} · Facts {result.factsAdded}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+                {harnessState.lastError ? (
+                  <div className="dev-panel-error">{harnessState.lastError}</div>
+                ) : null}
+              </div>
+            </DeveloperPanelSection>
             <DeveloperPanelSection title={`Conversation Log (${filteredEntries.length})`}>
               {filteredEntries.length === 0 ? (
                 <div className="dev-panel-empty">No entries yet.</div>
@@ -285,4 +353,12 @@ interface DeveloperSnapshot {
 interface DayStateSnapshot {
   dayIndex: number;
   visitedNpcIds: string[];
+}
+
+type SyntheticHarnessMode = "append" | "reset";
+
+interface SyntheticChatState {
+  isRunning: boolean;
+  lastResult: SyntheticChatResult | null;
+  lastError: string | null;
 }
