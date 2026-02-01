@@ -3,8 +3,8 @@
 # DO NOT EDIT - regenerated on task file change
 
 source_file: RALPH_TASK.md
-source_mtime: 1769952464
-generated_at: 2026-02-01T13:28:24Z
+source_mtime: 1769953037
+generated_at: 2026-02-01T13:38:06Z
 
 tasks:
   - id: "line_18"
@@ -149,7 +149,7 @@ tasks:
     raw_marker: -
   - id: "line_42"
     line_number: 42
-    status: pending
+    status: completed
     parallel_group: 6
     description: Implement memory extraction + salience scoring pipeline.
     indent_level: 0

@@ -174,3 +174,9 @@ This is how Ralph maintains continuity across iterations.
 - Implemented memory extraction + salience scoring pipeline with heuristic parsing in `game/memory/`.
 - Added memory fact persistence to IndexedDB/localStorage and wired extraction into the dialogue flow.
 - Checked off the memory extraction criterion in `RALPH_TASK.md`.
+
+### 2026-02-01 21:38:06
+**Session 12 ended** - Agent finished naturally (7 criteria remaining)
+
+### 2026-02-01 21:38:08
+**Session 13 started** (model: gpt-5.2-codex)

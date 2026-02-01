@@ -445,3 +445,46 @@ Ralph Session Started: Sun Feb  1 21:28:26 +08 2026
 ═══════════════════════════════════════════════════════════════
 Ralph Session Started: Sun Feb  1 21:32:16 +08 2026
 ═══════════════════════════════════════════════════════════════
+[21:32:23] 🟢 SESSION START: model=GPT-5.2 Codex
+[21:32:44] 🟢 READ /Users/sherryyjiang/animal-crossing/RALPH_TASK.md (80 lines, ~7.8KB)
+[21:32:44] 🟢 READ /Users/sherryyjiang/animal-crossing/.ralph/guardrails.md (28 lines, ~2.7KB)
+[21:32:44] 🟢 READ /Users/sherryyjiang/animal-crossing/.ralph/progress.md (172 lines, ~16.7KB)
+[21:32:44] 🟢 READ /Users/sherryyjiang/animal-crossing/.ralph/errors.log (5 lines, ~.4KB)
+[21:32:46] 🟢 TOKENS: 7875 / 80000 (9%) [read:27KB write:0KB assist:0KB shell:0KB]
+[21:32:56] 🟢 READ /Users/sherryyjiang/animal-crossing/PLAN.md (126 lines, ~12.3KB)
+[21:32:56] 🟢 READ /Users/sherryyjiang/animal-crossing/docs/llm-adapter.md (32 lines, ~3.1KB)
+[21:32:56] 🟢 READ /Users/sherryyjiang/animal-crossing/docs/cerebras-gpt-oss.md (31 lines, ~3.0KB)
+[21:32:56] 🟢 READ /Users/sherryyjiang/animal-crossing/docs/memory-schema.md (52 lines, ~5.0KB)
+[21:32:56] 🟢 READ /Users/sherryyjiang/animal-crossing/docs/npc-personality-notes.md (35 lines, ~3.4KB)
+[21:33:03] 🟢 READ /Users/sherryyjiang/animal-crossing/game/logs/conversation-log.ts (95 lines, ~9.2KB)
+[21:33:03] 🟢 READ /Users/sherryyjiang/animal-crossing/game/storage/local-store.ts (237 lines, ~23.1KB)
+[21:33:03] 🟢 READ /Users/sherryyjiang/animal-crossing/game/events/dialogue-events.ts (45 lines, ~4.3KB)
+[21:33:06] 🟢 READ /Users/sherryyjiang/animal-crossing/game/scenes/village-scene.ts (726 lines, ~70.8KB)
+[21:33:06] 🟢 READ /Users/sherryyjiang/animal-crossing/components/dialogue-overlay.tsx (197 lines, ~19.2KB)
+[21:33:16] 🟢 TOKENS: 47275 / 80000 (59%) [read:181KB write:0KB assist:0KB shell:0KB]
+[21:33:16] 🟢 READ /Users/sherryyjiang/animal-crossing/package.json (21 lines, ~2.0KB)
+[21:33:52] 🟢 TOKENS: 47800 / 80000 (59%) [read:183KB write:0KB assist:0KB shell:0KB]
+[21:34:44] 🟢 TOKENS: 47800 / 80000 (59%) [read:183KB write:0KB assist:0KB shell:0KB]
+[21:35:36] 🟢 TOKENS: 47800 / 80000 (59%) [read:183KB write:0KB assist:0KB shell:0KB]
+[21:36:07] 🟢 TOKENS: 47800 / 80000 (59%) [read:183KB write:0KB assist:0KB shell:0KB]
+[21:36:47] 🟢 TOKENS: 47800 / 80000 (59%) [read:183KB write:0KB assist:0KB shell:0KB]
+[21:37:01] 🟢 SHELL npm install zod → exit 0
+[21:37:17] 🟢 TOKENS: 47800 / 80000 (59%) [read:183KB write:0KB assist:0KB shell:0KB]
+[21:37:37] 🟢 SHELL git status --short → exit 0
+[21:37:38] 🟢 SHELL git diff → exit 0
+[21:37:38] 🟢 SHELL git log -5 --oneline → exit 0
+[21:37:46] 🟢 SHELL git add components/dialogue-overlay.tsx game/memory game/storage/local-store.ts package.json package-lock.json RALPH_TASK.md .ralph/progress.md → exit 0
+[21:37:50] 🟢 TOKENS: 47800 / 80000 (59%) [read:183KB write:0KB assist:0KB shell:0KB]
+[21:37:52] 🟢 SHELL git commit -m "$(cat <<'EOF'
+ralph: add heuristic memory extraction pipeline
+
+Persist memory facts locally and trigger extraction on dialogue send to seed salience-scored memories.
+EOF
+)" → exit 0
+[21:37:55] 🟢 SHELL git status --short → exit 0
+[21:38:06] 🟢 SESSION END: 342804ms, ~47934 tokens used
+[21:38:06] 🟢 TOKENS: 47934 / 80000 (59%) [read:183KB write:0KB assist:0KB shell:0KB]
+
+═══════════════════════════════════════════════════════════════
+Ralph Session Started: Sun Feb  1 21:38:08 +08 2026
+═══════════════════════════════════════════════════════════════
