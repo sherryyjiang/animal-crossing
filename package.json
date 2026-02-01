@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "debug": "^4.4.3",
     "next": "^16.1.6",
     "phaser": "^3.90.0",
     "react": "^19.2.4",
