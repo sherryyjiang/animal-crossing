@@ -72,3 +72,7 @@ This is how Ralph maintains continuity across iterations.
 ### 2026-02-01 23:00:13
 - Finalized memory schema and retrieval weights in `docs/memory-schema.md`.
 - Checked off the memory schema criterion in `RALPH_TASK.md`.
+
+### 2026-02-01 23:11:29
+- Finalized LLM adapter interface and config shape in `docs/llm-adapter.md`.
+- Checked off the LLM adapter criterion in `RALPH_TASK.md`.

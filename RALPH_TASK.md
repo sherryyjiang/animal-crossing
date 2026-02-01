@@ -29,7 +29,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Finalize art direction + palette + typography and document in `docs/visual-style.md`. <!-- group: 2 -->
 - [x] Finalize village layout plan (map sketch, zones, props) in `docs/village-map.md`. <!-- group: 2 -->
 - [x] Finalize memory schema + retrieval weights per NPC in `docs/memory-schema.md`. <!-- group: 2 -->
-- [ ] Finalize LLM adapter interface + config shape in `docs/llm-adapter.md`. <!-- group: 2 -->
+- [x] Finalize LLM adapter interface + config shape in `docs/llm-adapter.md`. <!-- group: 2 -->
 
 ## Implementation
 - [ ] Bootstrap Next.js app with Phaser 3 scene mounting (client-only). <!-- group: 3 -->
