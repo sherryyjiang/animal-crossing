@@ -21,6 +21,10 @@ body {
   display: flex;
 }
 
+.game-root {
+  flex: 1;
+}
+
 .loading {
   margin: auto;
   font-size: 16px;

@@ -32,7 +32,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Finalize LLM adapter interface + config shape in `docs/llm-adapter.md`. <!-- group: 2 -->
 
 ## Implementation
-- [ ] Bootstrap Next.js app with Phaser 3 scene mounting (client-only). <!-- group: 3 -->
+- [x] Bootstrap Next.js app with Phaser 3 scene mounting (client-only). <!-- group: 3 -->
 - [ ] Add player movement, collisions, camera follow, and interaction detection. <!-- group: 3 -->
 - [ ] Implement base village layout with pastel assets (SVG/Graphics). <!-- group: 4 -->
 - [ ] Add four NPCs with idle animations and location signage. <!-- group: 4 -->
