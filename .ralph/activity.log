@@ -628,3 +628,41 @@ Ralph Session Started: Sun Feb  1 22:07:02 +08 2026
 ═══════════════════════════════════════════════════════════════
 Ralph Session Started: Mon Feb  2 07:36:58 +08 2026
 ═══════════════════════════════════════════════════════════════
+[07:37:02] 🟢 SESSION START: model=GPT-5.2 Codex
+[07:37:21] 🟢 READ /Users/sherryyjiang/animal-crossing/RALPH_TASK.md (80 lines, ~7.8KB)
+[07:37:23] 🟢 READ /Users/sherryyjiang/animal-crossing/.ralph/guardrails.md (28 lines, ~2.7KB)
+[07:37:24] 🟢 READ /Users/sherryyjiang/animal-crossing/.ralph/progress.md (228 lines, ~22.2KB)
+[07:37:26] 🟢 READ /Users/sherryyjiang/animal-crossing/.ralph/errors.log (5 lines, ~.4KB)
+[07:37:31] 🟢 TOKENS: 9275 / 80000 (11%) [read:33KB write:0KB assist:0KB shell:0KB]
+[07:37:39] 🟢 READ /Users/sherryyjiang/animal-crossing/PLAN.md (126 lines, ~12.3KB)
+[07:37:41] 🟢 READ /Users/sherryyjiang/animal-crossing/docs/cerebras-gpt-oss.md (31 lines, ~3.0KB)
+[07:37:43] 🟢 READ /Users/sherryyjiang/animal-crossing/docs/llm-adapter.md (32 lines, ~3.1KB)
+[07:37:51] 🟢 READ /Users/sherryyjiang/animal-crossing/game/llm/llm-types.ts (74 lines, ~7.2KB)
+[07:37:57] 🟢 READ /Users/sherryyjiang/animal-crossing/game/memory/memory-pipeline.ts (388 lines, ~37.8KB)
+[07:38:00] 🟢 READ /Users/sherryyjiang/animal-crossing/components/dialogue-overlay.tsx (242 lines, ~23.6KB)
+[07:38:02] 🟢 TOKENS: 31600 / 80000 (39%) [read:120KB write:0KB assist:0KB shell:0KB]
+[07:38:02] 🟢 READ /Users/sherryyjiang/animal-crossing/game/storage/local-store.ts (511 lines, ~49.9KB)
+[07:38:06] 🟢 READ /Users/sherryyjiang/animal-crossing/game/memory/memory-retrieval.ts (125 lines, ~12.2KB)
+[07:38:12] 🟡 READ /Users/sherryyjiang/animal-crossing/game/config/game-config.ts (35 lines, ~3.4KB)
+[07:38:39] 🟡 TOKENS: 48375 / 80000 (60%) [read:186KB write:0KB assist:0KB shell:0KB]
+[07:39:44] 🟡 TOKENS: 48375 / 80000 (60%) [read:186KB write:0KB assist:0KB shell:0KB]
+[07:40:24] 🟡 TOKENS: 48375 / 80000 (60%) [read:186KB write:0KB assist:0KB shell:0KB]
+[07:40:41] 🟡 SHELL npm test → exit 0
+[07:40:49] 🟡 SHELL git status -sb → exit 0
+[07:40:49] 🟡 SHELL git diff → exit 0
+[07:40:49] 🟡 SHELL git log -5 --oneline → exit 0
+[07:40:54] 🟡 SHELL git add "game/llm/llm-config.ts" "game/llm/llm-adapter.ts" "RALPH_TASK.md" ".ralph/progress.md" → exit 0
+[07:40:54] 🟡 TOKENS: 48375 / 80000 (60%) [read:186KB write:0KB assist:0KB shell:0KB]
+[07:40:57] 🟡 SHELL git commit -m "$(cat <<'EOF'
+ralph: add LLM adapter and config switching
+
+Introduce LLM config resolution with env and stored overrides, plus a chat adapter for replies, fact extraction, and summaries.
+EOF
+)" → exit 0
+[07:41:00] 🟡 SHELL git status -sb → exit 0
+[07:41:12] 🟡 SESSION END: 249237ms, ~48593 tokens used
+[07:41:12] 🟡 TOKENS: 48593 / 80000 (60%) [read:186KB write:0KB assist:0KB shell:0KB]
+
+═══════════════════════════════════════════════════════════════
+Ralph Session Started: Mon Feb  2 07:41:14 +08 2026
+═══════════════════════════════════════════════════════════════

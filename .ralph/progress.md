@@ -230,3 +230,9 @@ This is how Ralph maintains continuity across iterations.
 - Implemented LLM config resolution with env-var and stored overrides in `game/llm/llm-config.ts`.
 - Added a Cerebras/openai-compatible chat adapter with fact extraction and day summary helpers in `game/llm/llm-adapter.ts`.
 - Checked off the LLM adapter + config switching criterion in `RALPH_TASK.md`.
+
+### 2026-02-02 07:41:12
+**Session 1 ended** - Agent finished naturally (5 criteria remaining)
+
+### 2026-02-02 07:41:14
+**Session 2 started** (model: gpt-5.2-codex)

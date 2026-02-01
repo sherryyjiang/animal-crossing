@@ -3,8 +3,8 @@
 # DO NOT EDIT - regenerated on task file change
 
 source_file: RALPH_TASK.md
-source_mtime: 1769953543
-generated_at: 2026-02-01T13:46:17Z
+source_mtime: 1769989233
+generated_at: 2026-02-01T23:41:12Z
 
 tasks:
   - id: "line_18"
@@ -163,7 +163,7 @@ tasks:
     raw_marker: -
   - id: "line_44"
     line_number: 44
-    status: pending
+    status: completed
     parallel_group: 6
     description: Implement LLM adapter + model configuration switching.
     indent_level: 0
