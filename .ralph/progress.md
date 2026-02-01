@@ -135,3 +135,9 @@ This is how Ralph maintains continuity across iterations.
 - Built a dialogue UI overlay with input and continue flow in `components/dialogue-overlay.tsx`.
 - Wired the notice board interaction to open/close dialogue in `game/scenes/village-scene.ts`.
 - Added overlay styling in `app/globals.css` and checked off the dialogue UI criterion.
+
+### 2026-02-01 21:21:32
+**Session 8 ended** - Agent finished naturally (10 criteria remaining)
+
+### 2026-02-01 21:21:34
+**Session 9 started** (model: gpt-5.2-codex)

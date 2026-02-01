@@ -333,3 +333,18 @@ Ralph Session Started: Sun Feb  1 21:16:26 +08 2026
 [21:20:55] 🔴 SHELL git status -sb → exit 0
 [21:20:55] 🔴 SHELL git diff → exit 0
 [21:20:55] 🔴 SHELL git log -5 --oneline → exit 0
+[21:21:08] 🔴 SHELL git add app/globals.css app/page.tsx components/dialogue-overlay.tsx game/events/dialogue-events.ts game/scenes/village-scene.ts RALPH_TASK.md .ralph/progress.md .ralph/activity.log → exit 0
+[21:21:12] 🔴 SHELL git commit -m "$(cat <<'EOF'
+ralph: add dialogue overlay flow
+
+Builds a dialogue panel with input and continue actions wired to notice board interactions.
+EOF
+)" → exit 0
+[21:21:15] 🔴 SHELL git status -sb → exit 0
+[21:21:20] 🔴 TOKENS: 69775 / 80000 (87%) - approaching limit [read:269KB write:0KB assist:0KB shell:0KB]
+[21:21:31] 🔴 SESSION END: 300307ms, ~70054 tokens used
+[21:21:31] 🔴 TOKENS: 70054 / 80000 (87%) - approaching limit [read:269KB write:0KB assist:1KB shell:0KB]
+
+═══════════════════════════════════════════════════════════════
+Ralph Session Started: Sun Feb  1 21:21:34 +08 2026
+═══════════════════════════════════════════════════════════════
