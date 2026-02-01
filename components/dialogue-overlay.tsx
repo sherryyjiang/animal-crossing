@@ -17,7 +17,7 @@ import { buildNpcMemoryContext } from "../game/memory/memory-retrieval";
 import type { NpcMemoryContext } from "../game/memory/memory-retrieval";
 import type { MemoryFact } from "../game/memory/memory-types";
 
-export function DialogueOverlay(): JSX.Element | null {
+export function DialogueOverlay() {
   const [activeSession, setActiveSession] = useState<DialogueSession | null>(null);
   const [inputValue, setInputValue] = useState("");
 
@@ -169,16 +169,16 @@ function createPlayerReply(
   playerText: string,
   npcReply: string
 ): DialogueSession {
-  const nextLines = [
+  const nextLines: DialogueLine[] = [
     ...session.lines,
     {
       id: createLineId(),
-      speaker: "player",
+      speaker: "player" as const,
       text: playerText,
     },
     {
       id: createLineId(),
-      speaker: "npc",
+      speaker: "npc" as const,
       text: npcReply,
     },
   ];

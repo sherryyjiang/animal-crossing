@@ -171,9 +171,9 @@ function createIndexedDbAdapter(database: IDBPDatabase<RalphDatabase>): StorageA
     async clearMemoryFacts() {
       await database.clear("memoryFacts");
     },
-    async getSetting(key) {
+    async getSetting<T>(key: string): Promise<T | null> {
       const record = await database.get("settings", key);
-      return record ? (record.value as unknown) : null;
+      return record ? (record.value as T) : null;
     },
     async saveSetting(key, value) {
       const record = createStoredSetting(key, value);

@@ -1,7 +1,7 @@
-\"use client\";
+"use client";
 
-import type { Game } from \"phaser\";
-import { useEffect, useRef } from \"react\";
+import type { Game } from "phaser";
+import { useEffect, useRef } from "react";
 
 export function PhaserGame() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -15,8 +15,10 @@ export function PhaserGame() {
     let isMounted = true;
 
     async function initGame() {
+      if (!container) return;
+      
       const [{ createGame }] = await Promise.all([
-        import(\"../game/create-game\"),
+        import("../game/create-game"),
       ]);
 
       const width = container.clientWidth || 800;
@@ -53,6 +55,5 @@ export function PhaserGame() {
     };
   }, []);
 
-  return <div ref={containerRef} className=\"game-root\" />;
+  return <div ref={containerRef} className="game-root" />;
 }
-

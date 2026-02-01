@@ -1,3 +1,5 @@
+"use client";
+
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { DialogueOverlay } from "../components/dialogue-overlay";
