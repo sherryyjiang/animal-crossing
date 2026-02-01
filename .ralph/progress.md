@@ -48,3 +48,7 @@ This is how Ralph maintains continuity across iterations.
 ### 2026-02-01 21:57:03
 - Gathered visual references and summarized cues in `docs/visual-references.md`.
 - Checked off the visual references criterion in `RALPH_TASK.md`.
+
+### 2026-02-01 22:05:44
+- Brainstormed three visual directions with palettes and UI notes in `docs/visual-directions.md`.
+- Checked off the visual directions criterion in `RALPH_TASK.md`.
