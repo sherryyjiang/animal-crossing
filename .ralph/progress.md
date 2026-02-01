@@ -68,3 +68,7 @@ This is how Ralph maintains continuity across iterations.
 ### 2026-02-01 22:48:10
 - Finalized village layout plan in `docs/village-map.md`.
 - Checked off the village layout criterion in `RALPH_TASK.md`.
+
+### 2026-02-01 23:00:13
+- Finalized memory schema and retrieval weights in `docs/memory-schema.md`.
+- Checked off the memory schema criterion in `RALPH_TASK.md`.
