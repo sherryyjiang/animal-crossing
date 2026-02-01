@@ -19,7 +19,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Evaluate layout approach: tilemap vs hand-placed sprites; document tradeoffs and pick one. <!-- group: 1 -->
 - [x] Investigate IndexedDB options (`idb`, `dexie`) and pick a library + fallback plan. <!-- group: 1 -->
 - [x] Review Cerebras gpt-oss API constraints (auth, rate limits, CORS) and define how the browser client will call it. <!-- group: 1 -->
-- [ ] Review Phaser Gamedev resources for best practices on camera, collisions, and interaction triggers. <!-- group: 1 -->
+- [x] Review Phaser Gamedev resources for best practices on camera, collisions, and interaction triggers. <!-- group: 1 -->
 - [ ] Gather 3-5 visual references (Animal Crossing, Stardew, Spiritfarer, etc.) and summarize the key cues. <!-- group: 1 -->
 - [ ] Brainstorm 3 distinct visual directions (pastel vector, soft pixel, paper-cut) with palettes + UI notes. <!-- group: 1 -->
 - [ ] Draft NPC personality notes + memory filters in a short doc. <!-- group: 1 -->
