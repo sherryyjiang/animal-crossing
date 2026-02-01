@@ -120,3 +120,7 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-01 21:13:04
 **Session 7 started** (model: gpt-5.2-codex)
+
+### 2026-02-01 21:38:12
+- Added four NPCs with idle bob animations, signs, and colliders in `game/scenes/village-scene.ts`.
+- Checked off the NPC criterion in `RALPH_TASK.md`.

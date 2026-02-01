@@ -9,6 +9,7 @@ export class VillageScene extends Phaser.Scene {
   private playerBody?: Phaser.Physics.Arcade.Body;
   private interactionZone?: Phaser.GameObjects.Zone;
   private interactionPrompt?: Phaser.GameObjects.Text;
+  private npcColliders: Phaser.GameObjects.Rectangle[] = [];
   private isPlayerInRange = false;
   private movementVector = new Phaser.Math.Vector2();
 
@@ -50,9 +51,10 @@ export class VillageScene extends Phaser.Scene {
     this.playerBody = playerBody;
 
     const obstacles = config.obstacles.map((obstacle) => createStaticObstacle(this, obstacle));
-    obstacles.forEach((obstacle) => {
-      this.physics.add.collider(player, obstacle);
-    });
+    obstacles.forEach((obstacle) => this.physics.add.collider(player, obstacle));
+
+    this.npcColliders = config.npcs.map((npc) => createNpc(this, npc, config.colors));
+    this.npcColliders.forEach((collider) => this.physics.add.collider(player, collider));
 
     const interaction = config.interactionTarget;
     this.add.rectangle(
@@ -319,6 +321,114 @@ function createFence(scene: Phaser.Scene, fence: FenceConfig, colors: SceneConfi
   rail.setAlpha(0.75);
 }
 
+function createNpc(
+  scene: Phaser.Scene,
+  npc: NpcConfig,
+  colors: SceneConfig["colors"]
+): Phaser.GameObjects.Rectangle {
+  const npcContainer = scene.add.container(npc.x, npc.y);
+  npcContainer.setDepth(3);
+
+  const shadow = scene.add.ellipse(
+    0,
+    npc.size.height * 0.45,
+    npc.size.width * 0.7,
+    npc.size.height * 0.3,
+    colors.npcShadow
+  );
+  shadow.setAlpha(0.35);
+
+  const body = scene.add.ellipse(0, 0, npc.size.width, npc.size.height, npc.colors.body);
+  const belly = scene.add.ellipse(
+    0,
+    npc.size.height * 0.1,
+    npc.size.width * 0.55,
+    npc.size.height * 0.45,
+    npc.colors.accent
+  );
+  belly.setAlpha(0.7);
+  const leftEye = scene.add.circle(
+    -npc.size.width * 0.2,
+    -npc.size.height * 0.1,
+    npc.size.width * 0.08,
+    npc.colors.face
+  );
+  const rightEye = scene.add.circle(
+    npc.size.width * 0.2,
+    -npc.size.height * 0.1,
+    npc.size.width * 0.08,
+    npc.colors.face
+  );
+  const blush = scene.add.circle(
+    npc.size.width * 0.1,
+    npc.size.height * 0.05,
+    npc.size.width * 0.06,
+    npc.colors.accent
+  );
+  blush.setAlpha(0.8);
+
+  npcContainer.add([shadow, body, belly, leftEye, rightEye, blush]);
+
+  const nameTag = scene.add.text(0, -npc.size.height * 0.9, npc.name, {
+    fontFamily: "Nunito, system-ui, sans-serif",
+    fontSize: "13px",
+    color: "#6b5f5a",
+  });
+  nameTag.setOrigin(0.5, 1);
+
+  const roleTag = scene.add.text(0, -npc.size.height * 0.7, npc.role, {
+    fontFamily: "Nunito, system-ui, sans-serif",
+    fontSize: "11px",
+    color: "#8a7f78",
+  });
+  roleTag.setOrigin(0.5, 1);
+  npcContainer.add([nameTag, roleTag]);
+
+  createNpcSign(scene, npc, colors);
+
+  scene.tweens.add({
+    targets: npcContainer,
+    y: npc.y - npc.idle.bob,
+    duration: npc.idle.duration,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.easeInOut",
+    delay: npc.idle.delay,
+  });
+
+  const collider = scene.add.rectangle(
+    npc.x,
+    npc.y + npc.size.height * 0.2,
+    npc.collider.width,
+    npc.collider.height,
+    0x000000,
+    0
+  );
+  scene.physics.add.existing(collider, true);
+
+  return collider;
+}
+
+function createNpcSign(scene: Phaser.Scene, npc: NpcConfig, colors: SceneConfig["colors"]) {
+  const signX = npc.x + npc.sign.offsetX;
+  const signY = npc.y + npc.sign.offsetY;
+  const postHeight = 20;
+
+  const post = scene.add.rectangle(signX, signY + postHeight / 2, 6, postHeight, colors.signPost);
+  post.setDepth(2);
+
+  const board = scene.add.rectangle(signX, signY, 120, 30, colors.signBoard);
+  board.setDepth(3);
+
+  const label = scene.add.text(signX, signY, npc.sign.label, {
+    fontFamily: "Nunito, system-ui, sans-serif",
+    fontSize: "12px",
+    color: "#6b5f5a",
+  });
+  label.setOrigin(0.5);
+  label.setDepth(4);
+}
+
 function getSceneConfig(): SceneConfig {
   return SCENE_CONFIG;
 }
@@ -349,6 +459,9 @@ const SCENE_CONFIG = {
     flowerLavender: 0xd6c2f2,
     fence: 0xd7c2aa,
     fenceRail: 0xe6d7c3,
+    npcShadow: 0x7a6f66,
+    signBoard: 0xfaf3e8,
+    signPost: 0xd9c3af,
   },
   terrain: {
     meadow: { x: 80, y: 240, width: 1440, height: 680, radius: 180 },
@@ -400,6 +513,56 @@ const SCENE_CONFIG = {
     label: "Notice Board",
     prompt: "Press E or Space to read",
   },
+  npcs: [
+    {
+      id: "mira",
+      name: "Mira",
+      role: "Hall Host",
+      x: 360,
+      y: 430,
+      colors: { body: 0xf6c0d6, accent: 0xfbe2ec, face: 0x5f5a54 },
+      size: { width: 42, height: 52 },
+      collider: { width: 34, height: 36 },
+      sign: { label: "Community Hall", offsetX: -80, offsetY: -10 },
+      idle: { bob: 6, duration: 1800, delay: 150 },
+    },
+    {
+      id: "theo",
+      name: "Theo",
+      role: "Carpenter",
+      x: 1180,
+      y: 680,
+      colors: { body: 0xbfe4f4, accent: 0xdff1fb, face: 0x55646b },
+      size: { width: 44, height: 54 },
+      collider: { width: 36, height: 38 },
+      sign: { label: "Craft Shop", offsetX: 90, offsetY: -20 },
+      idle: { bob: 7, duration: 1700, delay: 300 },
+    },
+    {
+      id: "jun",
+      name: "Jun",
+      role: "Garden Keeper",
+      x: 930,
+      y: 300,
+      colors: { body: 0xc9e9d1, accent: 0xe3f4e8, face: 0x55624f },
+      size: { width: 40, height: 50 },
+      collider: { width: 32, height: 34 },
+      sign: { label: "Grove", offsetX: 70, offsetY: -20 },
+      idle: { bob: 5, duration: 1900, delay: 90 },
+    },
+    {
+      id: "pia",
+      name: "Pia",
+      role: "Market Scout",
+      x: 700,
+      y: 820,
+      colors: { body: 0xf6ddb1, accent: 0xfdeccc, face: 0x6a5c4f },
+      size: { width: 46, height: 56 },
+      collider: { width: 38, height: 40 },
+      sign: { label: "Market Corner", offsetX: -90, offsetY: -20 },
+      idle: { bob: 6, duration: 1750, delay: 220 },
+    },
+  ],
 } satisfies SceneConfig;
 
 interface MovementKeys {
@@ -433,10 +596,14 @@ interface SceneConfig {
     flowerLavender: number;
     fence: number;
     fenceRail: number;
+    npcShadow: number;
+    signBoard: number;
+    signPost: number;
   };
   terrain: TerrainConfig;
   obstacles: ObstacleConfig[];
   interactionTarget: InteractionTargetConfig;
+  npcs: NpcConfig[];
 }
 
 interface ObstacleConfig {
@@ -456,6 +623,23 @@ interface InteractionTargetConfig {
   color: number;
   label: string;
   prompt: string;
+}
+
+interface NpcConfig {
+  id: string;
+  name: string;
+  role: string;
+  x: number;
+  y: number;
+  colors: {
+    body: number;
+    accent: number;
+    face: number;
+  };
+  size: { width: number; height: number };
+  collider: { width: number; height: number };
+  sign: { label: string; offsetX: number; offsetY: number };
+  idle: { bob: number; duration: number; delay: number };
 }
 
 interface TerrainConfig {

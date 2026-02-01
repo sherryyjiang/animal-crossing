@@ -35,7 +35,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Bootstrap Next.js app with Phaser 3 scene mounting (client-only). <!-- group: 3 -->
 - [x] Add player movement, collisions, camera follow, and interaction detection. <!-- group: 3 -->
 - [x] Implement base village layout with pastel assets (SVG/Graphics). <!-- group: 4 -->
-- [ ] Add four NPCs with idle animations and location signage. <!-- group: 4 -->
+- [x] Add four NPCs with idle animations and location signage. <!-- group: 4 -->
 - [ ] Build dialogue UI overlay with input + continue flow. <!-- group: 5 -->
 - [ ] Implement conversation logging per NPC/day. <!-- group: 5 -->
 - [ ] Implement local storage layer (IndexedDB + fallback). <!-- group: 6 -->
