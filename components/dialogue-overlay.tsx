@@ -11,6 +11,8 @@ import {
   appendConversationEntry,
   initializeConversationLog,
 } from "../game/logs/conversation-log";
+import { extractAndStoreMemories } from "../game/memory/memory-pipeline";
+import { initializeMemoryStore } from "../game/memory/memory-store";
 
 export function DialogueOverlay(): JSX.Element | null {
   const [activeSession, setActiveSession] = useState<DialogueSession | null>(null);
@@ -18,6 +20,7 @@ export function DialogueOverlay(): JSX.Element | null {
 
   useEffect(() => {
     void initializeConversationLog();
+    void initializeMemoryStore();
     const unsubscribe = onDialogueOpen((detail) => {
       const greeting = createGreeting(detail.npcName);
       setActiveSession(createDialogueSession(detail, greeting));
@@ -44,16 +47,17 @@ export function DialogueOverlay(): JSX.Element | null {
     if (!trimmedInput) return;
 
     const npcReply = createNpcReply(activeSession.npcName, trimmedInput);
-    appendConversationEntry({
+    const playerEntry = appendConversationEntry({
       npcId: activeSession.npcId,
       speaker: "player",
       text: trimmedInput,
     });
-    appendConversationEntry({
+    const npcEntry = appendConversationEntry({
       npcId: activeSession.npcId,
       speaker: "npc",
       text: npcReply,
     });
+    void extractAndStoreMemories(activeSession.npcId, [playerEntry, npcEntry]);
     const nextSession = createPlayerReply(activeSession, trimmedInput, npcReply);
     setActiveSession(nextSession);
     setInputValue("");

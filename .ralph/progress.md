@@ -169,3 +169,8 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-01 21:32:16
 **Session 12 started** (model: gpt-5.2-codex)
+
+### 2026-02-01 21:48:30
+- Implemented memory extraction + salience scoring pipeline with heuristic parsing in `game/memory/`.
+- Added memory fact persistence to IndexedDB/localStorage and wired extraction into the dialogue flow.
+- Checked off the memory extraction criterion in `RALPH_TASK.md`.
