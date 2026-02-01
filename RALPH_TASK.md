@@ -45,7 +45,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Add day cycle state, end-day gating, and LLM summary modal. <!-- group: 7 -->
 
 ## Polish + Validation
-- [ ] Add developer panel for inspecting memory + day logs. <!-- group: 8 -->
+- [x] Add developer panel for inspecting memory + day logs. <!-- group: 8 -->
 - [ ] Add synthetic chat harness to validate memory behavior. <!-- group: 8 -->
 - [ ] UX polish: transitions, dialogue pacing, ambient animation. <!-- group: 9 -->
 - [ ] QA checklist + manual test script in `docs/test-plan.md`. <!-- group: 9 -->

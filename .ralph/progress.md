@@ -249,3 +249,9 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-02 07:47:08
 **Session 3 started** (model: gpt-5.2-codex)
+
+### 2026-02-02 09:42:30
+- Added a developer panel overlay to inspect conversation logs and memory facts in `components/developer-panel.tsx`.
+- Wired the dev panel into the main page and styled it in `app/globals.css`.
+- Checked off the developer panel criterion in `RALPH_TASK.md`.
+- Tests: `npm test` (fails: no test specified).
