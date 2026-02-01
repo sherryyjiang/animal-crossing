@@ -7,14 +7,16 @@ import type { MemoryFact } from "../memory/memory-types";
 const log = debug("ralph:storage");
 
 const DATABASE_NAME = "ralph-local";
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 const LOCAL_STORAGE_PREFIX = "ralph:v1";
 const LOCAL_STORAGE_CONVERSATION_KEY = `${LOCAL_STORAGE_PREFIX}:conversation-entries`;
 const LOCAL_STORAGE_HEALTH_KEY = `${LOCAL_STORAGE_PREFIX}:healthcheck`;
 const LOCAL_STORAGE_MEMORY_FACTS_KEY = `${LOCAL_STORAGE_PREFIX}:memory-facts`;
+const LOCAL_STORAGE_SETTINGS_PREFIX = `${LOCAL_STORAGE_PREFIX}:settings`;
 
 const memoryConversationEntries: ConversationEntry[] = [];
 const memoryFacts: MemoryFact[] = [];
+const memorySettings = new Map<string, unknown>();
 
 let storageAdapterPromise: Promise<StorageAdapter> | null = null;
 
@@ -63,6 +65,21 @@ export async function clearStoredMemoryFacts() {
   await adapter.clearMemoryFacts();
 }
 
+export async function loadSetting<T>(key: string) {
+  const adapter = await getStorageAdapter();
+  return adapter.getSetting<T>(key);
+}
+
+export async function saveSetting<T>(key: string, value: T) {
+  const adapter = await getStorageAdapter();
+  await adapter.saveSetting(key, value);
+}
+
+export async function clearSetting(key: string) {
+  const adapter = await getStorageAdapter();
+  await adapter.clearSetting(key);
+}
+
 async function getStorageAdapter() {
   if (!storageAdapterPromise) {
     storageAdapterPromise = createStorageAdapter();
@@ -98,6 +115,10 @@ async function openDatabase() {
       if (oldVersion < 2 && !database.objectStoreNames.contains("memoryFacts")) {
         const store = database.createObjectStore("memoryFacts", { keyPath: "id" });
         store.createIndex("by-npc", "npcId");
+      }
+
+      if (oldVersion < 3 && !database.objectStoreNames.contains("settings")) {
+        database.createObjectStore("settings", { keyPath: "key" });
       }
     },
   });
@@ -150,6 +171,21 @@ function createIndexedDbAdapter(database: IDBPDatabase<RalphDatabase>): StorageA
     async clearMemoryFacts() {
       await database.clear("memoryFacts");
     },
+    async getSetting(key) {
+      const record = await database.get("settings", key);
+      return record ? (record.value as unknown) : null;
+    },
+    async saveSetting(key, value) {
+      const record = createStoredSetting(key, value);
+      try {
+        await database.put("settings", record);
+      } catch (error) {
+        log("Failed to persist setting %s %o", key, error);
+      }
+    },
+    async clearSetting(key) {
+      await database.delete("settings", key);
+    },
   };
 }
 
@@ -198,6 +234,21 @@ function createLocalStorageAdapter(reason: string): StorageAdapter {
         log("Failed to clear localStorage memory facts %o", error);
       }
     },
+    async getSetting(key) {
+      return readLocalStorageSetting(key);
+    },
+    async saveSetting(key, value) {
+      writeLocalStorageSetting(key, value);
+    },
+    async clearSetting(key) {
+      memorySettings.delete(key);
+      if (!isLocalStorageAvailable()) return;
+      try {
+        localStorage.removeItem(createLocalStorageSettingKey(key));
+      } catch (error) {
+        log("Failed to clear localStorage setting %s %o", key, error);
+      }
+    },
   };
 }
 
@@ -218,6 +269,8 @@ async function migrateLocalStorageEntries(adapter: StorageAdapter) {
     const mergedFacts = mergeMemoryFacts(existingFacts, facts);
     await adapter.replaceMemoryFacts(mergedFacts);
   }
+
+  await migrateLocalStorageSettings(adapter);
 
   try {
     localStorage.removeItem(LOCAL_STORAGE_CONVERSATION_KEY);
@@ -289,6 +342,78 @@ function writeLocalStorageMemoryFacts(facts: MemoryFact[]) {
   }
 }
 
+async function migrateLocalStorageSettings(adapter: StorageAdapter) {
+  if (!isLocalStorageAvailable()) return;
+  const keys = getLocalStorageSettingKeys();
+  if (keys.length === 0) return;
+
+  for (const key of keys) {
+    const value = readLocalStorageSetting(key);
+    if (value === null) continue;
+    await adapter.saveSetting(key, value);
+  }
+
+  try {
+    for (const key of keys) {
+      localStorage.removeItem(createLocalStorageSettingKey(key));
+    }
+  } catch (error) {
+    log("Failed to clear localStorage settings after migration %o", error);
+  }
+}
+
+function getLocalStorageSettingKeys() {
+  if (!isLocalStorageAvailable()) return [];
+  const keys: string[] = [];
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key || !key.startsWith(LOCAL_STORAGE_SETTINGS_PREFIX)) continue;
+    const rawKey = key.slice(LOCAL_STORAGE_SETTINGS_PREFIX.length + 1);
+    if (rawKey) keys.push(rawKey);
+  }
+  return keys;
+}
+
+function readLocalStorageSetting<T>(key: string): T | null {
+  if (!isLocalStorageAvailable()) {
+    return (memorySettings.get(key) as T | undefined) ?? null;
+  }
+
+  try {
+    const raw = localStorage.getItem(createLocalStorageSettingKey(key));
+    if (!raw) return (memorySettings.get(key) as T | undefined) ?? null;
+    const parsed = JSON.parse(raw);
+    memorySettings.set(key, parsed);
+    return parsed as T;
+  } catch (error) {
+    log("Failed to read localStorage setting %s %o", key, error);
+    return (memorySettings.get(key) as T | undefined) ?? null;
+  }
+}
+
+function writeLocalStorageSetting<T>(key: string, value: T) {
+  memorySettings.set(key, value);
+  if (!isLocalStorageAvailable()) return;
+
+  try {
+    localStorage.setItem(createLocalStorageSettingKey(key), JSON.stringify(value));
+  } catch (error) {
+    log("Failed to write localStorage setting %s %o", key, error);
+  }
+}
+
+function createLocalStorageSettingKey(key: string) {
+  return `${LOCAL_STORAGE_SETTINGS_PREFIX}:${key}`;
+}
+
+function createStoredSetting<T>(key: string, value: T): StoredSetting<T> {
+  return {
+    key,
+    value,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 function mergeConversationEntries(
   existingEntries: ConversationEntry[],
   incomingEntries: ConversationEntry[]
@@ -356,6 +481,9 @@ interface StorageAdapter {
   replaceMemoryFacts: (facts: MemoryFact[]) => Promise<void>;
   clearConversationEntries: () => Promise<void>;
   clearMemoryFacts: () => Promise<void>;
+  getSetting: <T>(key: string) => Promise<T | null>;
+  saveSetting: <T>(key: string, value: T) => Promise<void>;
+  clearSetting: (key: string) => Promise<void>;
 }
 
 interface RalphDatabase extends DBSchema {
@@ -369,4 +497,14 @@ interface RalphDatabase extends DBSchema {
     value: MemoryFact;
     indexes: { "by-npc": string };
   };
+  settings: {
+    key: string;
+    value: StoredSetting;
+  };
+}
+
+interface StoredSetting<T = unknown> {
+  key: string;
+  value: T;
+  updatedAt: string;
 }
