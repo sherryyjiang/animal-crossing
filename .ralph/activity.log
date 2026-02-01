@@ -364,3 +364,18 @@ Ralph Session Started: Sun Feb  1 21:21:34 +08 2026
 [21:23:29] 🟢 SHELL git status -sb → exit 0
 [21:23:29] 🟢 SHELL git diff → exit 0
 [21:23:29] 🟢 SHELL git log -5 --oneline → exit 0
+[21:23:37] 🟢 SHELL git add "game/logs/conversation-log.ts" "components/dialogue-overlay.tsx" "RALPH_TASK.md" ".ralph/progress.md" ".ralph/activity.log" → exit 0
+[21:23:40] 🟢 SHELL git commit -m "$(cat <<'EOF'
+ralph: log conversations per npc/day
+
+Record dialogue greetings and replies into an in-memory log keyed by NPC and day to support memory and summary features.
+EOF
+)" → exit 0
+[21:23:44] 🟢 SHELL git status -sb → exit 0
+[21:23:58] 🟢 TOKENS: 34400 / 80000 (43%) [read:131KB write:0KB assist:0KB shell:0KB]
+[21:24:00] 🟢 SESSION END: 140513ms, ~34544 tokens used
+[21:24:00] 🟢 TOKENS: 34544 / 80000 (43%) [read:131KB write:0KB assist:0KB shell:0KB]
+
+═══════════════════════════════════════════════════════════════
+Ralph Session Started: Sun Feb  1 21:24:02 +08 2026
+═══════════════════════════════════════════════════════════════
