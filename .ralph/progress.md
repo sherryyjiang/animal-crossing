@@ -52,3 +52,7 @@ This is how Ralph maintains continuity across iterations.
 ### 2026-02-01 22:05:44
 - Brainstormed three visual directions with palettes and UI notes in `docs/visual-directions.md`.
 - Checked off the visual directions criterion in `RALPH_TASK.md`.
+
+### 2026-02-01 22:16:21
+- Drafted NPC personality notes and memory filters in `docs/npc-personality-notes.md`.
+- Checked off the NPC personality criterion in `RALPH_TASK.md`.

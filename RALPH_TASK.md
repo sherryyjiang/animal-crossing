@@ -22,7 +22,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Review Phaser Gamedev resources for best practices on camera, collisions, and interaction triggers. <!-- group: 1 -->
 - [x] Gather 3-5 visual references (Animal Crossing, Stardew, Spiritfarer, etc.) and summarize the key cues. <!-- group: 1 -->
 - [x] Brainstorm 3 distinct visual directions (pastel vector, soft pixel, paper-cut) with palettes + UI notes. <!-- group: 1 -->
-- [ ] Draft NPC personality notes + memory filters in a short doc. <!-- group: 1 -->
+- [x] Draft NPC personality notes + memory filters in a short doc. <!-- group: 1 -->
 - [ ] Draft day summary prompt template + safety guardrails. <!-- group: 1 -->
 
 ## Design Decisions
