@@ -32,3 +32,7 @@ This is how Ralph maintains continuity across iterations.
 ### 2026-02-01 21:10:12
 - Documented layout approach tradeoffs and chose hand-placed layout in `docs/layout-approach.md`.
 - Checked off the layout approach criterion in `RALPH_TASK.md`.
+
+### 2026-02-01 21:20:48
+- Documented IndexedDB library choice and fallback plan in `docs/storage-approach.md`.
+- Checked off the IndexedDB investigation criterion in `RALPH_TASK.md`.
