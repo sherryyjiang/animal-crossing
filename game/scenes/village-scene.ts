@@ -1,5 +1,6 @@
 import debug from "debug";
 import Phaser from "phaser";
+import { emitDialogueOpen, onDialogueClose } from "../events/dialogue-events";
 
 export class VillageScene extends Phaser.Scene {
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -11,6 +12,7 @@ export class VillageScene extends Phaser.Scene {
   private interactionPrompt?: Phaser.GameObjects.Text;
   private npcColliders: Phaser.GameObjects.Rectangle[] = [];
   private isPlayerInRange = false;
+  private isDialogueOpen = false;
   private movementVector = new Phaser.Math.Vector2();
 
   constructor() {
@@ -107,10 +109,23 @@ export class VillageScene extends Phaser.Scene {
     }
 
     this.cameras.main.startFollow(player, true, config.cameraLerp, config.cameraLerp);
+
+    const unsubscribeClose = onDialogueClose(() => {
+      this.isDialogueOpen = false;
+    });
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      unsubscribeClose();
+    });
   }
 
   update() {
     if (!this.playerBody) return;
+
+    if (this.isDialogueOpen) {
+      this.playerBody.setVelocity(0, 0);
+      return;
+    }
 
     this.applyMovement();
     this.updateInteractionState();
@@ -154,10 +169,20 @@ export class VillageScene extends Phaser.Scene {
     );
     if (!isInteractPressed) return;
 
+    const interactionTarget = getSceneConfig().interactionTarget;
+    this.isDialogueOpen = true;
+    this.interactionPrompt?.setVisible(false);
+    emitDialogueOpen({
+      npcId: "notice-board",
+      npcName: interactionTarget.label,
+      npcRole: "Bulletin Board",
+      prompt: interactionTarget.dialoguePrompt,
+    });
+
     log("Interaction triggered at %o", {
       x: this.player.x,
       y: this.player.y,
-      target: getSceneConfig().interactionTarget.label,
+      target: interactionTarget.label,
     });
   }
 }
@@ -512,6 +537,7 @@ const SCENE_CONFIG = {
     color: 0xf7b6c2,
     label: "Notice Board",
     prompt: "Press E or Space to read",
+    dialoguePrompt: "Share a quick note about your day.",
   },
   npcs: [
     {
@@ -623,6 +649,7 @@ interface InteractionTargetConfig {
   color: number;
   label: string;
   prompt: string;
+  dialoguePrompt: string;
 }
 
 interface NpcConfig {

@@ -130,3 +130,8 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-01 21:16:26
 **Session 8 started** (model: gpt-5.2-codex)
+
+### 2026-02-01 21:25:40
+- Built a dialogue UI overlay with input and continue flow in `components/dialogue-overlay.tsx`.
+- Wired the notice board interaction to open/close dialogue in `game/scenes/village-scene.ts`.
+- Added overlay styling in `app/globals.css` and checked off the dialogue UI criterion.
