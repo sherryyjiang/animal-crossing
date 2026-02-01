@@ -23,20 +23,7 @@ export class VillageScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, config.mapWidth, config.mapHeight);
 
     this.add.rectangle(0, 0, config.mapWidth, config.mapHeight, config.colors.background).setOrigin(0);
-    this.add.rectangle(
-      config.mapWidth / 2,
-      config.mapHeight * 0.7,
-      config.mapWidth * 0.9,
-      config.mapHeight * 0.35,
-      config.colors.grass
-    );
-    this.add.rectangle(
-      config.mapWidth / 2,
-      config.mapHeight * 0.35,
-      config.mapWidth * 0.6,
-      config.mapHeight * 0.35,
-      config.colors.plaza
-    );
+    createVillageLayout(this, config);
 
     this.add.text(config.mapWidth / 2, config.mapHeight * 0.18, "Ralph Village", {
       fontFamily: "Nunito, system-ui, sans-serif",
@@ -208,6 +195,130 @@ function createStaticObstacle(
   return rectangle;
 }
 
+function createVillageLayout(scene: Phaser.Scene, config: SceneConfig) {
+  const { colors, terrain } = config;
+
+  const base = scene.add.graphics();
+  base.setDepth(0);
+
+  base.fillStyle(colors.grass, 1);
+  base.fillRoundedRect(
+    terrain.meadow.x,
+    terrain.meadow.y,
+    terrain.meadow.width,
+    terrain.meadow.height,
+    terrain.meadow.radius
+  );
+
+  base.fillStyle(colors.plaza, 1);
+  base.fillRoundedRect(
+    terrain.plaza.x,
+    terrain.plaza.y,
+    terrain.plaza.width,
+    terrain.plaza.height,
+    terrain.plaza.radius
+  );
+
+  base.fillStyle(colors.path, 1);
+  terrain.paths.forEach((path) => {
+    base.fillRoundedRect(path.x, path.y, path.width, path.height, path.radius);
+  });
+
+  base.fillStyle(colors.sand, 1);
+  terrain.sandyPatches.forEach((patch) => {
+    base.fillRoundedRect(patch.x, patch.y, patch.width, patch.height, patch.radius);
+  });
+
+  base.fillStyle(colors.water, 1);
+  terrain.ponds.forEach((pond) => {
+    base.fillEllipse(pond.x, pond.y, pond.width, pond.height);
+  });
+
+  base.lineStyle(2, colors.waterEdge, 1);
+  terrain.ponds.forEach((pond) => {
+    base.strokeEllipse(pond.x, pond.y, pond.width, pond.height);
+  });
+
+  terrain.flowerBeds.forEach((bed) => {
+    createFlowerPatch(scene, bed, colors);
+  });
+
+  terrain.trees.forEach((tree) => {
+    createTree(scene, tree, colors);
+  });
+
+  terrain.fences.forEach((fence) => {
+    createFence(scene, fence, colors);
+  });
+}
+
+function createTree(scene: Phaser.Scene, tree: TreeConfig, colors: SceneConfig["colors"]) {
+  const trunk = scene.add.rectangle(
+    tree.x,
+    tree.y + tree.trunkHeight / 2,
+    tree.trunkWidth,
+    tree.trunkHeight,
+    colors.treeTrunk
+  );
+  trunk.setDepth(1);
+
+  const canopy = scene.add.ellipse(
+    tree.x,
+    tree.y - tree.canopyOffset,
+    tree.canopyWidth,
+    tree.canopyHeight,
+    colors.treeCanopy
+  );
+  canopy.setDepth(1);
+
+  const highlight = scene.add.ellipse(
+    tree.x - tree.canopyWidth * 0.12,
+    tree.y - tree.canopyOffset - tree.canopyHeight * 0.08,
+    tree.canopyWidth * 0.38,
+    tree.canopyHeight * 0.32,
+    colors.treeHighlight
+  );
+  highlight.setDepth(2);
+}
+
+function createFlowerPatch(scene: Phaser.Scene, bed: FlowerBedConfig, colors: SceneConfig["colors"]) {
+  const blossomColors = [colors.flowerPink, colors.flowerYellow, colors.flowerLavender];
+  const rows = Math.max(1, Math.floor(bed.height / bed.spacing));
+  const columns = Math.max(1, Math.floor(bed.width / bed.spacing));
+
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      const x = bed.x + column * bed.spacing + bed.spacing * 0.4;
+      const y = bed.y + row * bed.spacing + bed.spacing * 0.4;
+      const color = blossomColors[(row + column) % blossomColors.length];
+      const blossom = scene.add.circle(x, y, bed.flowerRadius, color);
+      blossom.setDepth(1);
+    }
+  }
+}
+
+function createFence(scene: Phaser.Scene, fence: FenceConfig, colors: SceneConfig["colors"]) {
+  const postCount = Math.max(2, Math.floor(fence.length / fence.gap));
+  const directionVector = fence.direction === "horizontal" ? { x: 1, y: 0 } : { x: 0, y: 1 };
+
+  for (let index = 0; index < postCount; index += 1) {
+    const x = fence.x + index * fence.gap * directionVector.x;
+    const y = fence.y + index * fence.gap * directionVector.y;
+    const post = scene.add.rectangle(x, y, fence.postWidth, fence.postHeight, colors.fence);
+    post.setDepth(1);
+  }
+
+  const rail = scene.add.rectangle(
+    fence.x + (fence.length * directionVector.x) / 2,
+    fence.y + (fence.length * directionVector.y) / 2,
+    fence.direction === "horizontal" ? fence.length : fence.postWidth,
+    fence.direction === "horizontal" ? fence.postWidth : fence.length,
+    colors.fenceRail
+  );
+  rail.setDepth(1);
+  rail.setAlpha(0.75);
+}
+
 function getSceneConfig(): SceneConfig {
   return SCENE_CONFIG;
 }
@@ -226,6 +337,53 @@ const SCENE_CONFIG = {
     grass: 0xe1f0e9,
     plaza: 0xfce8d4,
     player: 0x9cc6f3,
+    path: 0xf5d6c4,
+    sand: 0xf8e9d8,
+    water: 0xb9dbf3,
+    waterEdge: 0x8dbcd8,
+    treeCanopy: 0xc8e6c9,
+    treeHighlight: 0xe3f3e1,
+    treeTrunk: 0xcaa58c,
+    flowerPink: 0xf6b6c8,
+    flowerYellow: 0xf8e2a0,
+    flowerLavender: 0xd6c2f2,
+    fence: 0xd7c2aa,
+    fenceRail: 0xe6d7c3,
+  },
+  terrain: {
+    meadow: { x: 80, y: 240, width: 1440, height: 680, radius: 180 },
+    plaza: { x: 360, y: 140, width: 880, height: 380, radius: 160 },
+    paths: [
+      { x: 520, y: 420, width: 140, height: 460, radius: 48 },
+      { x: 520, y: 420, width: 520, height: 120, radius: 48 },
+      { x: 820, y: 240, width: 120, height: 260, radius: 40 },
+    ],
+    sandyPatches: [
+      { x: 180, y: 720, width: 220, height: 140, radius: 40 },
+      { x: 1160, y: 560, width: 200, height: 120, radius: 36 },
+    ],
+    ponds: [
+      { x: 1180, y: 280, width: 240, height: 150 },
+      { x: 260, y: 360, width: 190, height: 120 },
+    ],
+    flowerBeds: [
+      { x: 460, y: 280, width: 120, height: 90, spacing: 26, flowerRadius: 6 },
+      { x: 660, y: 300, width: 130, height: 90, spacing: 26, flowerRadius: 6 },
+      { x: 980, y: 640, width: 160, height: 90, spacing: 28, flowerRadius: 6 },
+    ],
+    trees: [
+      { x: 150, y: 260, canopyWidth: 80, canopyHeight: 70, canopyOffset: 30, trunkWidth: 16, trunkHeight: 28 },
+      { x: 220, y: 520, canopyWidth: 90, canopyHeight: 76, canopyOffset: 32, trunkWidth: 16, trunkHeight: 28 },
+      { x: 320, y: 760, canopyWidth: 88, canopyHeight: 74, canopyOffset: 32, trunkWidth: 16, trunkHeight: 30 },
+      { x: 860, y: 160, canopyWidth: 92, canopyHeight: 80, canopyOffset: 34, trunkWidth: 16, trunkHeight: 30 },
+      { x: 1280, y: 380, canopyWidth: 86, canopyHeight: 72, canopyOffset: 30, trunkWidth: 16, trunkHeight: 28 },
+      { x: 1360, y: 660, canopyWidth: 92, canopyHeight: 78, canopyOffset: 32, trunkWidth: 16, trunkHeight: 30 },
+    ],
+    fences: [
+      { x: 520, y: 700, length: 260, gap: 28, postWidth: 10, postHeight: 20, direction: "horizontal" },
+      { x: 920, y: 700, length: 220, gap: 28, postWidth: 10, postHeight: 20, direction: "horizontal" },
+      { x: 1080, y: 760, length: 140, gap: 26, postWidth: 10, postHeight: 20, direction: "vertical" },
+    ],
   },
   obstacles: [
     { x: 420, y: 300, width: 220, height: 140, color: 0xf4d6c4, label: "Community Hall" },
@@ -263,7 +421,20 @@ interface SceneConfig {
     grass: number;
     plaza: number;
     player: number;
+    path: number;
+    sand: number;
+    water: number;
+    waterEdge: number;
+    treeCanopy: number;
+    treeHighlight: number;
+    treeTrunk: number;
+    flowerPink: number;
+    flowerYellow: number;
+    flowerLavender: number;
+    fence: number;
+    fenceRail: number;
   };
+  terrain: TerrainConfig;
   obstacles: ObstacleConfig[];
   interactionTarget: InteractionTargetConfig;
 }
@@ -285,4 +456,59 @@ interface InteractionTargetConfig {
   color: number;
   label: string;
   prompt: string;
+}
+
+interface TerrainConfig {
+  meadow: RoundedRectConfig;
+  plaza: RoundedRectConfig;
+  paths: RoundedRectConfig[];
+  sandyPatches: RoundedRectConfig[];
+  ponds: EllipseConfig[];
+  flowerBeds: FlowerBedConfig[];
+  trees: TreeConfig[];
+  fences: FenceConfig[];
+}
+
+interface RoundedRectConfig {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  radius: number;
+}
+
+interface EllipseConfig {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface FlowerBedConfig {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  spacing: number;
+  flowerRadius: number;
+}
+
+interface TreeConfig {
+  x: number;
+  y: number;
+  canopyWidth: number;
+  canopyHeight: number;
+  canopyOffset: number;
+  trunkWidth: number;
+  trunkHeight: number;
+}
+
+interface FenceConfig {
+  x: number;
+  y: number;
+  length: number;
+  gap: number;
+  postWidth: number;
+  postHeight: number;
+  direction: "horizontal" | "vertical";
 }
