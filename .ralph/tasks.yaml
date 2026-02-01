@@ -3,8 +3,8 @@
 # DO NOT EDIT - regenerated on task file change
 
 source_file: RALPH_TASK.md
-source_mtime: 1769950159
-generated_at: 2026-02-01T12:49:32Z
+source_mtime: 1769950582
+generated_at: 2026-02-01T13:00:11Z
 
 tasks:
   - id: "line_18"
@@ -16,84 +16,84 @@ tasks:
     raw_marker: -
   - id: "line_19"
     line_number: 19
-    status: pending
+    status: completed
     parallel_group: 1
     description: Evaluate layout approach: tilemap vs hand-placed sprites; document tradeoffs and pick one.
     indent_level: 0
     raw_marker: -
   - id: "line_20"
     line_number: 20
-    status: pending
+    status: completed
     parallel_group: 1
     description: Investigate IndexedDB options (`idb`, `dexie`) and pick a library + fallback plan.
     indent_level: 0
     raw_marker: -
   - id: "line_21"
     line_number: 21
-    status: pending
+    status: completed
     parallel_group: 1
     description: Review Cerebras gpt-oss API constraints (auth, rate limits, CORS) and define how the browser client will call it.
     indent_level: 0
     raw_marker: -
   - id: "line_22"
     line_number: 22
-    status: pending
+    status: completed
     parallel_group: 1
     description: Review Phaser Gamedev resources for best practices on camera, collisions, and interaction triggers.
     indent_level: 0
     raw_marker: -
   - id: "line_23"
     line_number: 23
-    status: pending
+    status: completed
     parallel_group: 1
     description: Gather 3-5 visual references (Animal Crossing, Stardew, Spiritfarer, etc.) and summarize the key cues.
     indent_level: 0
     raw_marker: -
   - id: "line_24"
     line_number: 24
-    status: pending
+    status: completed
     parallel_group: 1
     description: Brainstorm 3 distinct visual directions (pastel vector, soft pixel, paper-cut) with palettes + UI notes.
     indent_level: 0
     raw_marker: -
   - id: "line_25"
     line_number: 25
-    status: pending
+    status: completed
     parallel_group: 1
     description: Draft NPC personality notes + memory filters in a short doc.
     indent_level: 0
     raw_marker: -
   - id: "line_26"
     line_number: 26
-    status: pending
+    status: completed
     parallel_group: 1
     description: Draft day summary prompt template + safety guardrails.
     indent_level: 0
     raw_marker: -
   - id: "line_29"
     line_number: 29
-    status: pending
+    status: completed
     parallel_group: 2
     description: Finalize art direction + palette + typography and document in `docs/visual-style.md`.
     indent_level: 0
     raw_marker: -
   - id: "line_30"
     line_number: 30
-    status: pending
+    status: completed
     parallel_group: 2
     description: Finalize village layout plan (map sketch, zones, props) in `docs/village-map.md`.
     indent_level: 0
     raw_marker: -
   - id: "line_31"
     line_number: 31
-    status: pending
+    status: completed
     parallel_group: 2
     description: Finalize memory schema + retrieval weights per NPC in `docs/memory-schema.md`.
     indent_level: 0
     raw_marker: -
   - id: "line_32"
     line_number: 32
-    status: pending
+    status: completed
     parallel_group: 2
     description: Finalize LLM adapter interface + config shape in `docs/llm-adapter.md`.
     indent_level: 0
