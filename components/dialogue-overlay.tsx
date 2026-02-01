@@ -11,6 +11,7 @@ import {
   appendConversationEntry,
   initializeConversationLog,
 } from "../game/logs/conversation-log";
+import { markNpcVisited } from "../game/day-cycle";
 import { extractAndStoreMemories } from "../game/memory/memory-pipeline";
 import { initializeMemoryStore } from "../game/memory/memory-store";
 import { buildNpcMemoryContext } from "../game/memory/memory-retrieval";
@@ -73,6 +74,7 @@ export function DialogueOverlay() {
       text: npcReply,
     });
     void extractAndStoreMemories(activeSession.npcId, [playerEntry, npcEntry]);
+    void markNpcVisited(activeSession.npcId);
     const nextSession = createPlayerReply(activeSession, trimmedInput, npcReply);
     setActiveSession(nextSession);
     setInputValue("");

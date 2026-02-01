@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import { DayCycleOverlay } from "../components/day-cycle-overlay";
 import { DialogueOverlay } from "../components/dialogue-overlay";
 
 const PhaserGame = dynamic(
@@ -14,6 +15,7 @@ export default function HomePage() {
     <main className="game-shell">
       <Suspense fallback={<div className="loading">Loading...</div>}>
         <PhaserGame />
+        <DayCycleOverlay />
         <DialogueOverlay />
       </Suspense>
     </main>

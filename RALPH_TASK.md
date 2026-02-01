@@ -42,7 +42,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Implement memory extraction + salience scoring pipeline. <!-- group: 6 -->
 - [x] Implement memory retrieval + NPC personality prompts. <!-- group: 6 -->
 - [x] Implement LLM adapter + model configuration switching. <!-- group: 6 -->
-- [ ] Add day cycle state, end-day gating, and LLM summary modal. <!-- group: 7 -->
+- [x] Add day cycle state, end-day gating, and LLM summary modal. <!-- group: 7 -->
 
 ## Polish + Validation
 - [ ] Add developer panel for inspecting memory + day logs. <!-- group: 8 -->

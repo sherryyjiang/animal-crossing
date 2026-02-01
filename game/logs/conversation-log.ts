@@ -50,6 +50,10 @@ export function getConversationEntries() {
   return [...conversationEntries];
 }
 
+export function getEntriesForDay(dayIndex = activeDayIndex) {
+  return conversationEntries.filter((entry) => entry.dayIndex === dayIndex);
+}
+
 export function getEntriesForNpcDay(npcId: string, dayIndex = activeDayIndex) {
   return conversationEntries.filter((entry) => entry.npcId === npcId && entry.dayIndex === dayIndex);
 }

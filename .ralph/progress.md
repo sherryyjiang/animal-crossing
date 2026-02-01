@@ -5,7 +5,7 @@
 ## Summary
 
 - Iterations completed: 0
-- Current status: Research underway (integration pattern documented)
+- Current status: Day cycle implemented (5 criteria remaining)
 
 ## How This Works
 
@@ -236,3 +236,10 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-02 07:41:14
 **Session 2 started** (model: gpt-5.2-codex)
+
+### 2026-02-02 09:20:00
+- Added day cycle state tracking with persistence and NPC visit gating in `game/day-cycle.ts`.
+- Enabled NPC interactions and prompts in `game/scenes/village-scene.ts`.
+- Added HUD + end-day summary modal with LLM summaries in `components/day-cycle-overlay.tsx`.
+- Checked off the day cycle criterion in `RALPH_TASK.md`.
+- Tests: `npm test` (fails: no test specified).

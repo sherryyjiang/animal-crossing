@@ -10,7 +10,9 @@ export class VillageScene extends Phaser.Scene {
   private playerBody?: Phaser.Physics.Arcade.Body;
   private interactionZone?: Phaser.GameObjects.Zone;
   private interactionPrompt?: Phaser.GameObjects.Text;
+  private npcPrompt?: Phaser.GameObjects.Text;
   private npcColliders: Phaser.GameObjects.Rectangle[] = [];
+  private npcLookup = new Map<string, NpcConfig>();
   private isPlayerInRange = false;
   private isDialogueOpen = false;
   private movementVector = new Phaser.Math.Vector2();
@@ -56,6 +58,7 @@ export class VillageScene extends Phaser.Scene {
     obstacles.forEach((obstacle) => this.physics.add.collider(player, obstacle));
 
     this.npcColliders = config.npcs.map((npc) => createNpc(this, npc, config.colors));
+    this.npcLookup = new Map(config.npcs.map((npc) => [npc.id, npc]));
     this.npcColliders.forEach((collider) => this.physics.add.collider(player, collider));
 
     const interaction = config.interactionTarget;
@@ -98,6 +101,17 @@ export class VillageScene extends Phaser.Scene {
     );
     this.interactionPrompt.setOrigin(0.5, 0);
     this.interactionPrompt.setVisible(false);
+
+    this.npcPrompt = this.add.text(24, 64, "", {
+      fontFamily: "Nunito, system-ui, sans-serif",
+      fontSize: "14px",
+      color: "#5e564f",
+      backgroundColor: "#fef8f3",
+      padding: { x: 8, y: 6 },
+    });
+    this.npcPrompt.setScrollFactor(0);
+    this.npcPrompt.setDepth(5);
+    this.npcPrompt.setVisible(false);
 
     this.cursors = this.input.keyboard?.createCursorKeys();
     if (this.input.keyboard) {
@@ -160,18 +174,43 @@ export class VillageScene extends Phaser.Scene {
       this.isPlayerInRange = true;
     });
 
-    this.interactionPrompt?.setVisible(this.isPlayerInRange);
+    const activeNpc = this.getNpcInRange();
+    const isNpcInRange = Boolean(activeNpc);
 
-    if (!this.isPlayerInRange || this.interactKeys.length === 0) return;
+    if (this.npcPrompt) {
+      this.npcPrompt.setText(activeNpc ? getNpcPrompt(activeNpc) : "");
+      this.npcPrompt.setVisible(isNpcInRange);
+    }
+    this.interactionPrompt?.setVisible(this.isPlayerInRange && !isNpcInRange);
+
+    if ((!this.isPlayerInRange && !isNpcInRange) || this.interactKeys.length === 0) return;
 
     const isInteractPressed = this.interactKeys.some((key) =>
       Phaser.Input.Keyboard.JustDown(key)
     );
     if (!isInteractPressed) return;
 
+    if (activeNpc) {
+      this.isDialogueOpen = true;
+      this.interactionPrompt?.setVisible(false);
+      this.npcPrompt?.setVisible(false);
+      emitDialogueOpen({
+        npcId: activeNpc.id,
+        npcName: activeNpc.name,
+        npcRole: activeNpc.role,
+        prompt: `Share something with ${activeNpc.name}.`,
+      });
+      log("NPC interaction triggered %o", {
+        npcId: activeNpc.id,
+        npcName: activeNpc.name,
+      });
+      return;
+    }
+
     const interactionTarget = getSceneConfig().interactionTarget;
     this.isDialogueOpen = true;
     this.interactionPrompt?.setVisible(false);
+    this.npcPrompt?.setVisible(false);
     emitDialogueOpen({
       npcId: "notice-board",
       npcName: interactionTarget.label,
@@ -184,6 +223,25 @@ export class VillageScene extends Phaser.Scene {
       y: this.player.y,
       target: interactionTarget.label,
     });
+  }
+
+  private getNpcInRange() {
+    if (!this.playerBody) return null;
+    const playerBounds = this.playerBody.getBounds();
+    for (const collider of this.npcColliders) {
+      const body = collider.body as Phaser.Physics.Arcade.Body | null;
+      if (!body) continue;
+      const intersects = Phaser.Geom.Intersects.RectangleToRectangle(
+        playerBounds,
+        body.getBounds()
+      );
+      if (!intersects) continue;
+      const npcId = collider.getData("npcId") as string | undefined;
+      if (!npcId) continue;
+      const npc = this.npcLookup.get(npcId);
+      if (npc) return npc;
+    }
+    return null;
   }
 }
 
@@ -430,6 +488,7 @@ function createNpc(
     0
   );
   scene.physics.add.existing(collider, true);
+  collider.setData("npcId", npc.id);
 
   return collider;
 }
@@ -456,6 +515,10 @@ function createNpcSign(scene: Phaser.Scene, npc: NpcConfig, colors: SceneConfig[
 
 function getSceneConfig(): SceneConfig {
   return SCENE_CONFIG;
+}
+
+function getNpcPrompt(npc: NpcConfig) {
+  return `Press E or Space to talk to ${npc.name}`;
 }
 
 const log = debug("ralph:village");
