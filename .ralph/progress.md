@@ -274,3 +274,10 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-02 07:55:36
 **Session 5 started** (model: gpt-5.2-codex)
+
+### 2026-02-02 07:58:56
+- Added dialogue pacing with a typing delay and indicator in `components/dialogue-overlay.tsx`.
+- Added overlay/line transitions in `app/globals.css`.
+- Added ambient scene animations (tree sway, pond shimmer, plaza motes) in `game/scenes/village-scene.ts`.
+- Checked off the UX polish criterion in `RALPH_TASK.md`.
+- Tests: `npm test` (fails: no test specified).

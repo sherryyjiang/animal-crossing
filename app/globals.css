@@ -41,6 +41,7 @@ body {
   padding: 24px;
   background: linear-gradient(180deg, rgba(246, 239, 231, 0.3), rgba(246, 239, 231, 0.75));
   pointer-events: none;
+  animation: overlay-fade-in 220ms ease-out;
 }
 
 .dialogue-panel {
@@ -53,6 +54,7 @@ body {
   flex-direction: column;
   gap: 14px;
   pointer-events: auto;
+  animation: panel-rise-in 260ms ease-out;
 }
 
 .dialogue-header {
@@ -104,6 +106,7 @@ body {
   background: #f8efe6;
   border-radius: 12px;
   padding: 10px 12px;
+  animation: line-fade-in 220ms ease-out;
 }
 
 .dialogue-line.is-player {
@@ -166,6 +169,32 @@ body {
   justify-content: flex-end;
 }
 
+.dialogue-line.is-typing {
+  opacity: 0.85;
+}
+
+.dialogue-typing {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dialogue-typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #9c8f86;
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+
+.dialogue-typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dialogue-typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
 .day-hud {
   position: absolute;
   top: 18px;
@@ -218,6 +247,7 @@ body {
   background: rgba(246, 239, 231, 0.75);
   padding: 24px;
   z-index: 6;
+  animation: overlay-fade-in 220ms ease-out;
 }
 
 .day-summary-panel {
@@ -229,6 +259,7 @@ body {
   flex-direction: column;
   gap: 14px;
   box-shadow: 0 24px 48px rgba(107, 95, 90, 0.18);
+  animation: panel-rise-in 260ms ease-out;
 }
 
 .day-summary-title {
@@ -303,6 +334,7 @@ body {
   flex-direction: column;
   gap: 12px;
   overflow: hidden;
+  animation: panel-rise-in 240ms ease-out;
 }
 
 .dev-panel-header {
@@ -477,5 +509,48 @@ body {
 .dev-panel-error {
   font-size: 12px;
   color: #b36b6b;
+}
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes panel-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes line-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes typing-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
 }
 

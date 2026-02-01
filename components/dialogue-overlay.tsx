@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import {
   emitDialogueClose,
@@ -21,12 +21,14 @@ import type { MemoryFact } from "../game/memory/memory-types";
 export function DialogueOverlay() {
   const [activeSession, setActiveSession] = useState<DialogueSession | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const replyTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     void initializeConversationLog();
     void initializeMemoryStore();
     const unsubscribe = onDialogueOpen((detail) => {
+      clearReplyTimer(replyTimerRef);
       void (async () => {
         const memoryContext = await buildNpcMemoryContext({
           npcId: detail.npcId,
@@ -47,6 +49,7 @@ export function DialogueOverlay() {
 
     return () => {
       isMounted = false;
+      clearReplyTimer(replyTimerRef);
       unsubscribe();
     };
   }, []);
@@ -68,19 +71,28 @@ export function DialogueOverlay() {
       speaker: "player",
       text: trimmedInput,
     });
-    const npcEntry = appendConversationEntry({
-      npcId: activeSession.npcId,
-      speaker: "npc",
-      text: npcReply,
-    });
-    void extractAndStoreMemories(activeSession.npcId, [playerEntry, npcEntry]);
-    void markNpcVisited(activeSession.npcId);
-    const nextSession = createPlayerReply(activeSession, trimmedInput, npcReply);
+    const nextSession = createPlayerLine(activeSession, trimmedInput);
     setActiveSession(nextSession);
     setInputValue("");
+    clearReplyTimer(replyTimerRef);
+    replyTimerRef.current = window.setTimeout(() => {
+      const npcEntry = appendConversationEntry({
+        npcId: activeSession.npcId,
+        speaker: "npc",
+        text: npcReply,
+      });
+      void extractAndStoreMemories(activeSession.npcId, [playerEntry, npcEntry]);
+      void markNpcVisited(activeSession.npcId);
+      setActiveSession((current) => {
+        if (!current || current.npcId !== activeSession.npcId) return current;
+        return createNpcReplySession(current, npcReply);
+      });
+      clearReplyTimer(replyTimerRef);
+    }, DIALOGUE_PACING.npcReplyDelayMs);
   }
 
   function handleContinue() {
+    clearReplyTimer(replyTimerRef);
     emitDialogueClose();
     setActiveSession(null);
     setInputValue("");
@@ -119,6 +131,16 @@ export function DialogueOverlay() {
               <span className="dialogue-text">{line.text}</span>
             </div>
           ))}
+          {activeSession.isNpcTyping ? (
+            <div className="dialogue-line is-npc is-typing">
+              <span className="dialogue-speaker">{activeSession.npcName}</span>
+              <span className="dialogue-text dialogue-typing">
+                <span className="dialogue-typing-dot" />
+                <span className="dialogue-typing-dot" />
+                <span className="dialogue-typing-dot" />
+              </span>
+            </div>
+          ) : null}
         </div>
         <div className="dialogue-input">
           <input
@@ -156,6 +178,7 @@ function createDialogueSession(
     memoryContext,
     hasPlayerLine: false,
     hasNpcReply: false,
+    isNpcTyping: false,
     lines: [
       {
         id: createLineId(),
@@ -166,30 +189,36 @@ function createDialogueSession(
   };
 }
 
-function createPlayerReply(
-  session: DialogueSession,
-  playerText: string,
-  npcReply: string
-): DialogueSession {
-  const nextLines: DialogueLine[] = [
-    ...session.lines,
-    {
-      id: createLineId(),
-      speaker: "player" as const,
-      text: playerText,
-    },
-    {
-      id: createLineId(),
-      speaker: "npc" as const,
-      text: npcReply,
-    },
-  ];
-
+function createPlayerLine(session: DialogueSession, playerText: string): DialogueSession {
   return {
     ...session,
     hasPlayerLine: true,
+    hasNpcReply: false,
+    isNpcTyping: true,
+    lines: [
+      ...session.lines,
+      {
+        id: createLineId(),
+        speaker: "player" as const,
+        text: playerText,
+      },
+    ],
+  };
+}
+
+function createNpcReplySession(session: DialogueSession, npcReply: string): DialogueSession {
+  return {
+    ...session,
     hasNpcReply: true,
-    lines: nextLines,
+    isNpcTyping: false,
+    lines: [
+      ...session.lines,
+      {
+        id: createLineId(),
+        speaker: "npc" as const,
+        text: npcReply,
+      },
+    ],
   };
 }
 
@@ -225,6 +254,12 @@ function createLineId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function clearReplyTimer(timerRef: { current: number | null }) {
+  if (timerRef.current === null) return;
+  window.clearTimeout(timerRef.current);
+  timerRef.current = null;
+}
+
 interface DialogueSession {
   npcId: string;
   npcName: string;
@@ -233,6 +268,7 @@ interface DialogueSession {
   memoryContext: NpcMemoryContext;
   hasPlayerLine: boolean;
   hasNpcReply: boolean;
+  isNpcTyping: boolean;
   lines: DialogueLine[];
 }
 
@@ -241,3 +277,7 @@ interface DialogueLine {
   speaker: "npc" | "player";
   text: string;
 }
+
+const DIALOGUE_PACING = {
+  npcReplyDelayMs: 650,
+};

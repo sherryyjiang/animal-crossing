@@ -281,7 +281,7 @@ function createStaticObstacle(
 }
 
 function createVillageLayout(scene: Phaser.Scene, config: SceneConfig) {
-  const { colors, terrain } = config;
+  const { colors, terrain, ambient } = config;
 
   const base = scene.add.graphics();
   base.setDepth(0);
@@ -329,15 +329,22 @@ function createVillageLayout(scene: Phaser.Scene, config: SceneConfig) {
   });
 
   terrain.trees.forEach((tree) => {
-    createTree(scene, tree, colors);
+    createTree(scene, tree, colors, ambient);
   });
 
   terrain.fences.forEach((fence) => {
     createFence(scene, fence, colors);
   });
+
+  createAmbientDetails(scene, terrain, colors, ambient);
 }
 
-function createTree(scene: Phaser.Scene, tree: TreeConfig, colors: SceneConfig["colors"]) {
+function createTree(
+  scene: Phaser.Scene,
+  tree: TreeConfig,
+  colors: SceneConfig["colors"],
+  ambient: AmbientConfig
+) {
   const trunk = scene.add.rectangle(
     tree.x,
     tree.y + tree.trunkHeight / 2,
@@ -364,6 +371,16 @@ function createTree(scene: Phaser.Scene, tree: TreeConfig, colors: SceneConfig["
     colors.treeHighlight
   );
   highlight.setDepth(2);
+
+  scene.tweens.add({
+    targets: [canopy, highlight],
+    y: canopy.y - ambient.treeSway.offset,
+    duration: ambient.treeSway.duration,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.easeInOut",
+    delay: ambient.treeSway.delay + Phaser.Math.Between(0, ambient.treeSway.variance),
+  });
 }
 
 function createFlowerPatch(scene: Phaser.Scene, bed: FlowerBedConfig, colors: SceneConfig["colors"]) {
@@ -402,6 +419,104 @@ function createFence(scene: Phaser.Scene, fence: FenceConfig, colors: SceneConfi
   );
   rail.setDepth(1);
   rail.setAlpha(0.75);
+}
+
+function createAmbientDetails(
+  scene: Phaser.Scene,
+  terrain: TerrainConfig,
+  colors: SceneConfig["colors"],
+  ambient: AmbientConfig
+) {
+  terrain.ponds.forEach((pond) => {
+    ambient.pondShimmers.forEach((shimmer) => {
+      createWaterShimmer(scene, pond, shimmer, colors);
+    });
+    ambient.pondLilies.forEach((lily) => {
+      createLilyPad(scene, pond, lily, colors);
+    });
+  });
+
+  ambient.plazaMotes.forEach((mote) => {
+    const x = terrain.plaza.x + terrain.plaza.width * mote.xPercent;
+    const y = terrain.plaza.y + terrain.plaza.height * mote.yPercent;
+    const dot = scene.add.circle(x, y, mote.radius, colors.plazaMote);
+    dot.setDepth(2);
+    dot.setAlpha(mote.alpha);
+    scene.tweens.add({
+      targets: dot,
+      y: y - mote.drift,
+      duration: mote.duration,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+      delay: mote.delay,
+    });
+    scene.tweens.add({
+      targets: dot,
+      alpha: mote.alpha * 0.6,
+      duration: mote.duration * 0.9,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+      delay: mote.delay,
+    });
+  });
+}
+
+function createWaterShimmer(
+  scene: Phaser.Scene,
+  pond: EllipseConfig,
+  shimmer: PondShimmerConfig,
+  colors: SceneConfig["colors"]
+) {
+  const shimmerX = pond.x + pond.width * shimmer.offsetX;
+  const shimmerY = pond.y + pond.height * shimmer.offsetY;
+  const ellipse = scene.add.ellipse(
+    shimmerX,
+    shimmerY,
+    pond.width * shimmer.widthScale,
+    pond.height * shimmer.heightScale,
+    colors.waterEdge
+  );
+  ellipse.setDepth(1);
+  ellipse.setAlpha(shimmer.alpha);
+  scene.tweens.add({
+    targets: ellipse,
+    alpha: shimmer.alpha * 1.5,
+    duration: shimmer.duration,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.easeInOut",
+    delay: shimmer.delay,
+  });
+}
+
+function createLilyPad(
+  scene: Phaser.Scene,
+  pond: EllipseConfig,
+  lily: PondLilyConfig,
+  colors: SceneConfig["colors"]
+) {
+  const lilyX = pond.x + pond.width * lily.offsetX;
+  const lilyY = pond.y + pond.height * lily.offsetY;
+  const pad = scene.add.ellipse(
+    lilyX,
+    lilyY,
+    pond.width * lily.widthScale,
+    pond.height * lily.heightScale,
+    colors.waterLily
+  );
+  pad.setDepth(1);
+  pad.setAlpha(lily.alpha);
+  scene.tweens.add({
+    targets: pad,
+    y: lilyY - lily.drift,
+    duration: lily.duration,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.easeInOut",
+    delay: lily.delay,
+  });
 }
 
 function createNpc(
@@ -550,6 +665,8 @@ const SCENE_CONFIG = {
     npcShadow: 0x7a6f66,
     signBoard: 0xfaf3e8,
     signPost: 0xd9c3af,
+    plazaMote: 0xfef6ea,
+    waterLily: 0xd7f0f5,
   },
   terrain: {
     meadow: { x: 80, y: 240, width: 1440, height: 680, radius: 180 },
@@ -652,6 +769,24 @@ const SCENE_CONFIG = {
       idle: { bob: 6, duration: 1750, delay: 220 },
     },
   ],
+  ambient: {
+    treeSway: { offset: 2, duration: 2800, delay: 200, variance: 500 },
+    pondShimmers: [
+      { offsetX: -0.18, offsetY: -0.12, widthScale: 0.22, heightScale: 0.16, alpha: 0.22, duration: 2200, delay: 0 },
+      { offsetX: 0.16, offsetY: 0.1, widthScale: 0.18, heightScale: 0.14, alpha: 0.18, duration: 2400, delay: 600 },
+    ],
+    pondLilies: [
+      { offsetX: -0.05, offsetY: 0.12, widthScale: 0.12, heightScale: 0.08, alpha: 0.5, duration: 3000, delay: 300, drift: 4 },
+      { offsetX: 0.2, offsetY: -0.05, widthScale: 0.1, heightScale: 0.07, alpha: 0.45, duration: 3200, delay: 900, drift: 5 },
+    ],
+    plazaMotes: [
+      { xPercent: 0.25, yPercent: 0.3, radius: 3, alpha: 0.6, drift: 8, duration: 3200, delay: 200 },
+      { xPercent: 0.6, yPercent: 0.25, radius: 2.5, alpha: 0.55, drift: 6, duration: 2800, delay: 500 },
+      { xPercent: 0.42, yPercent: 0.45, radius: 3, alpha: 0.5, drift: 7, duration: 3000, delay: 700 },
+      { xPercent: 0.72, yPercent: 0.5, radius: 2, alpha: 0.45, drift: 6, duration: 2600, delay: 400 },
+      { xPercent: 0.35, yPercent: 0.62, radius: 2.5, alpha: 0.5, drift: 7, duration: 3100, delay: 900 },
+    ],
+  },
 } satisfies SceneConfig;
 
 interface MovementKeys {
@@ -688,11 +823,14 @@ interface SceneConfig {
     npcShadow: number;
     signBoard: number;
     signPost: number;
+    plazaMote: number;
+    waterLily: number;
   };
   terrain: TerrainConfig;
   obstacles: ObstacleConfig[];
   interactionTarget: InteractionTargetConfig;
   npcs: NpcConfig[];
+  ambient: AmbientConfig;
 }
 
 interface ObstacleConfig {
@@ -785,4 +923,49 @@ interface FenceConfig {
   postWidth: number;
   postHeight: number;
   direction: "horizontal" | "vertical";
+}
+
+interface AmbientConfig {
+  treeSway: TreeSwayConfig;
+  pondShimmers: PondShimmerConfig[];
+  pondLilies: PondLilyConfig[];
+  plazaMotes: PlazaMoteConfig[];
+}
+
+interface TreeSwayConfig {
+  offset: number;
+  duration: number;
+  delay: number;
+  variance: number;
+}
+
+interface PondShimmerConfig {
+  offsetX: number;
+  offsetY: number;
+  widthScale: number;
+  heightScale: number;
+  alpha: number;
+  duration: number;
+  delay: number;
+}
+
+interface PondLilyConfig {
+  offsetX: number;
+  offsetY: number;
+  widthScale: number;
+  heightScale: number;
+  alpha: number;
+  duration: number;
+  delay: number;
+  drift: number;
+}
+
+interface PlazaMoteConfig {
+  xPercent: number;
+  yPercent: number;
+  radius: number;
+  alpha: number;
+  drift: number;
+  duration: number;
+  delay: number;
 }
