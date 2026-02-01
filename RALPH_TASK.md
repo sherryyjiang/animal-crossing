@@ -15,7 +15,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - LLM model should be swappable (start with gpt-oss on Cerebras).
 
 ## Research + Decisions
-- [ ] Review Phaser 3 + Next.js integration patterns (client-only mount, resize, input) and capture the chosen approach in a short doc. <!-- group: 1 -->
+- [x] Review Phaser 3 + Next.js integration patterns (client-only mount, resize, input) and capture the chosen approach in a short doc. <!-- group: 1 -->
 - [ ] Evaluate layout approach: tilemap vs hand-placed sprites; document tradeoffs and pick one. <!-- group: 1 -->
 - [ ] Investigate IndexedDB options (`idb`, `dexie`) and pick a library + fallback plan. <!-- group: 1 -->
 - [ ] Review Cerebras gpt-oss API constraints (auth, rate limits, CORS) and define how the browser client will call it. <!-- group: 1 -->

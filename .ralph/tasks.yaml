@@ -1,0 +1,205 @@
+# Ralph Task Cache
+# Auto-generated from RALPH_TASK.md
+# DO NOT EDIT - regenerated on task file change
+
+source_file: RALPH_TASK.md
+source_mtime: 1769950159
+generated_at: 2026-02-01T12:49:32Z
+
+tasks:
+  - id: "line_18"
+    line_number: 18
+    status: completed
+    parallel_group: 1
+    description: Review Phaser 3 + Next.js integration patterns (client-only mount, resize, input) and capture the chosen approach in a short doc.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_19"
+    line_number: 19
+    status: pending
+    parallel_group: 1
+    description: Evaluate layout approach: tilemap vs hand-placed sprites; document tradeoffs and pick one.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_20"
+    line_number: 20
+    status: pending
+    parallel_group: 1
+    description: Investigate IndexedDB options (`idb`, `dexie`) and pick a library + fallback plan.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_21"
+    line_number: 21
+    status: pending
+    parallel_group: 1
+    description: Review Cerebras gpt-oss API constraints (auth, rate limits, CORS) and define how the browser client will call it.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_22"
+    line_number: 22
+    status: pending
+    parallel_group: 1
+    description: Review Phaser Gamedev resources for best practices on camera, collisions, and interaction triggers.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_23"
+    line_number: 23
+    status: pending
+    parallel_group: 1
+    description: Gather 3-5 visual references (Animal Crossing, Stardew, Spiritfarer, etc.) and summarize the key cues.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_24"
+    line_number: 24
+    status: pending
+    parallel_group: 1
+    description: Brainstorm 3 distinct visual directions (pastel vector, soft pixel, paper-cut) with palettes + UI notes.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_25"
+    line_number: 25
+    status: pending
+    parallel_group: 1
+    description: Draft NPC personality notes + memory filters in a short doc.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_26"
+    line_number: 26
+    status: pending
+    parallel_group: 1
+    description: Draft day summary prompt template + safety guardrails.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_29"
+    line_number: 29
+    status: pending
+    parallel_group: 2
+    description: Finalize art direction + palette + typography and document in `docs/visual-style.md`.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_30"
+    line_number: 30
+    status: pending
+    parallel_group: 2
+    description: Finalize village layout plan (map sketch, zones, props) in `docs/village-map.md`.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_31"
+    line_number: 31
+    status: pending
+    parallel_group: 2
+    description: Finalize memory schema + retrieval weights per NPC in `docs/memory-schema.md`.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_32"
+    line_number: 32
+    status: pending
+    parallel_group: 2
+    description: Finalize LLM adapter interface + config shape in `docs/llm-adapter.md`.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_35"
+    line_number: 35
+    status: pending
+    parallel_group: 3
+    description: Bootstrap Next.js app with Phaser 3 scene mounting (client-only).
+    indent_level: 0
+    raw_marker: -
+  - id: "line_36"
+    line_number: 36
+    status: pending
+    parallel_group: 3
+    description: Add player movement, collisions, camera follow, and interaction detection.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_37"
+    line_number: 37
+    status: pending
+    parallel_group: 4
+    description: Implement base village layout with pastel assets (SVG/Graphics).
+    indent_level: 0
+    raw_marker: -
+  - id: "line_38"
+    line_number: 38
+    status: pending
+    parallel_group: 4
+    description: Add four NPCs with idle animations and location signage.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_39"
+    line_number: 39
+    status: pending
+    parallel_group: 5
+    description: Build dialogue UI overlay with input + continue flow.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_40"
+    line_number: 40
+    status: pending
+    parallel_group: 5
+    description: Implement conversation logging per NPC/day.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_41"
+    line_number: 41
+    status: pending
+    parallel_group: 6
+    description: Implement local storage layer (IndexedDB + fallback).
+    indent_level: 0
+    raw_marker: -
+  - id: "line_42"
+    line_number: 42
+    status: pending
+    parallel_group: 6
+    description: Implement memory extraction + salience scoring pipeline.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_43"
+    line_number: 43
+    status: pending
+    parallel_group: 6
+    description: Implement memory retrieval + NPC personality prompts.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_44"
+    line_number: 44
+    status: pending
+    parallel_group: 6
+    description: Implement LLM adapter + model configuration switching.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_45"
+    line_number: 45
+    status: pending
+    parallel_group: 7
+    description: Add day cycle state, end-day gating, and LLM summary modal.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_48"
+    line_number: 48
+    status: pending
+    parallel_group: 8
+    description: Add developer panel for inspecting memory + day logs.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_49"
+    line_number: 49
+    status: pending
+    parallel_group: 8
+    description: Add synthetic chat harness to validate memory behavior.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_50"
+    line_number: 50
+    status: pending
+    parallel_group: 9
+    description: UX polish: transitions, dialogue pacing, ambient animation.
+    indent_level: 0
+    raw_marker: -
+  - id: "line_51"
+    line_number: 51
+    status: pending
+    parallel_group: 9
+    description: QA checklist + manual test script in `docs/test-plan.md`.
+    indent_level: 0
+    raw_marker: -
