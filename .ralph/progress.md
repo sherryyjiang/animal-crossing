@@ -28,3 +28,7 @@ This is how Ralph maintains continuity across iterations.
 
 ### 2026-02-01 20:49:35
 **Session 2 started** (model: gpt-5.2-codex)
+
+### 2026-02-01 21:10:12
+- Documented layout approach tradeoffs and chose hand-placed layout in `docs/layout-approach.md`.
+- Checked off the layout approach criterion in `RALPH_TASK.md`.
