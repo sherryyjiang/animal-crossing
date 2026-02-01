@@ -64,3 +64,7 @@ This is how Ralph maintains continuity across iterations.
 ### 2026-02-01 22:38:51
 - Finalized art direction, palette, and typography in `docs/visual-style.md`.
 - Checked off the visual style criterion in `RALPH_TASK.md`.
+
+### 2026-02-01 22:48:10
+- Finalized village layout plan in `docs/village-map.md`.
+- Checked off the village layout criterion in `RALPH_TASK.md`.
