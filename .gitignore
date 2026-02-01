@@ -1,2 +1,4 @@
 # Ralph config (may contain API key)
 .cursor/ralph-config.json
+node_modules/
+.next/
