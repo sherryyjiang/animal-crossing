@@ -289,3 +289,18 @@ Ralph Session Started: Sun Feb  1 21:13:04 +08 2026
 [21:15:56] 🟢 SHELL git status -sb → exit 0
 [21:15:56] 🟢 SHELL git diff → exit 0
 [21:15:56] 🟢 SHELL git log -5 --oneline → exit 0
+[21:16:03] 🟢 SHELL git add ".ralph/activity.log" ".ralph/progress.md" "RALPH_TASK.md" "game/scenes/village-scene.ts" → exit 0
+[21:16:06] 🟢 SHELL git commit -m "$(cat <<'EOF'
+ralph: add village npcs and signs
+
+Adds four pastel NPCs with idle bobbing animations, colliders, and location signage to the village scene, and marks the criterion complete.
+EOF
+)" → exit 0
+[21:16:08] 🟢 SHELL git status -sb → exit 0
+[21:16:22] 🟢 TOKENS: 35850 / 80000 (44%) [read:137KB write:0KB assist:0KB shell:0KB]
+[21:16:23] 🟢 SESSION END: 192089ms, ~35977 tokens used
+[21:16:23] 🟢 TOKENS: 35977 / 80000 (44%) [read:137KB write:0KB assist:0KB shell:0KB]
+
+═══════════════════════════════════════════════════════════════
+Ralph Session Started: Sun Feb  1 21:16:26 +08 2026
+═══════════════════════════════════════════════════════════════

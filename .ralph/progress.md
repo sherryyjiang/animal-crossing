@@ -124,3 +124,9 @@ This is how Ralph maintains continuity across iterations.
 ### 2026-02-01 21:38:12
 - Added four NPCs with idle bob animations, signs, and colliders in `game/scenes/village-scene.ts`.
 - Checked off the NPC criterion in `RALPH_TASK.md`.
+
+### 2026-02-01 21:16:24
+**Session 7 ended** - Agent finished naturally (11 criteria remaining)
+
+### 2026-02-01 21:16:26
+**Session 8 started** (model: gpt-5.2-codex)
