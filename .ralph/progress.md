@@ -267,3 +267,4 @@ This is how Ralph maintains continuity across iterations.
 - Wired the harness into the developer panel with seed/reset actions and result summaries.
 - Styled the harness panel in `app/globals.css`.
 - Checked off the synthetic chat harness criterion in `RALPH_TASK.md`.
+- Tests: `npm test` (fails: no test specified).
