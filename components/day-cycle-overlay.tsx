@@ -528,16 +528,16 @@ function getHighlightTags(tags: string[]) {
 }
 
 function formatTagLabel(tag: string) {
-  const [, value = \"\"] = tag.split(\":\");
+  const [, value = ""] = tag.split(":");
   return value
-    .split(\"-\")
+    .split("-")
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(\" \");
+    .join(" ");
 }
 
 function getTagGroup(tag: string) {
-  const [group] = tag.split(\":\");
-  return group || \"misc\";
+  const [group] = tag.split(":");
+  return group || "misc";
 }
 
 interface SummaryState {
