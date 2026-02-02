@@ -3,8 +3,8 @@
 # DO NOT EDIT - regenerated on task file change
 
 source_file: RALPH_TASK.md
-source_mtime: 1769990081
-generated_at: 2026-02-01T23:55:34Z
+source_mtime: 1769990397
+generated_at: 2026-02-02T00:00:56Z
 
 tasks:
   - id: "line_18"
@@ -191,14 +191,14 @@ tasks:
     raw_marker: -
   - id: "line_50"
     line_number: 50
-    status: pending
+    status: completed
     parallel_group: 9
     description: UX polish: transitions, dialogue pacing, ambient animation.
     indent_level: 0
     raw_marker: -
   - id: "line_51"
     line_number: 51
-    status: pending
+    status: completed
     parallel_group: 9
     description: QA checklist + manual test script in `docs/test-plan.md`.
     indent_level: 0

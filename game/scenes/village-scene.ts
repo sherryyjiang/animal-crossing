@@ -226,14 +226,15 @@ export class VillageScene extends Phaser.Scene {
   }
 
   private getNpcInRange() {
-    if (!this.playerBody) return null;
-    const playerBounds = this.playerBody.getBounds();
+    if (!this.player?.active) return null;
+    const playerBounds = this.player.getBounds(new Phaser.Geom.Rectangle());
     for (const collider of this.npcColliders) {
       const body = collider.body as Phaser.Physics.Arcade.Body | null;
       if (!body) continue;
+      const bodyBounds = new Phaser.Geom.Rectangle(body.left, body.top, body.width, body.height);
       const intersects = Phaser.Geom.Intersects.RectangleToRectangle(
         playerBounds,
-        body.getBounds()
+        bodyBounds
       );
       if (!intersects) continue;
       const npcId = collider.getData("npcId") as string | undefined;

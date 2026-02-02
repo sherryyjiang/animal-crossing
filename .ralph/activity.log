@@ -184,3 +184,16 @@ EOF
 [08:00:13] 🔴 SHELL git status -sb → exit 0
 [08:00:13] 🔴 SHELL git diff → exit 0
 [08:00:14] 🔴 SHELL git log -5 --oneline → exit 0
+[08:00:18] 🔴 SHELL git add .ralph/activity.log .ralph/progress.md RALPH_TASK.md docs/test-plan.md → exit 0
+[08:00:21] 🔴 SHELL git commit -m "$(cat <<'EOF'
+ralph: add QA test plan
+
+Document manual QA checklist and step-by-step script for the village loop.
+EOF
+)" → exit 0
+[08:00:23] 🔴 SHELL git status -sb → exit 0
+[08:00:42] 🔴 TOKENS: 75275 / 80000 (94%) - rotation imminent [read:291KB write:0KB assist:0KB shell:0KB]
+[08:00:43] 🔴 SHELL git push → exit 0
+[08:00:55] 🔴 ✅ Agent signaled COMPLETE
+[08:00:55] 🔴 SESSION END: 313823ms, ~75452 tokens used
+[08:00:55] 🔴 TOKENS: 75452 / 80000 (94%) - rotation imminent [read:291KB write:0KB assist:0KB shell:0KB]
