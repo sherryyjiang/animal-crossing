@@ -281,3 +281,8 @@ This is how Ralph maintains continuity across iterations.
 - Added ambient scene animations (tree sway, pond shimmer, plaza motes) in `game/scenes/village-scene.ts`.
 - Checked off the UX polish criterion in `RALPH_TASK.md`.
 - Tests: `npm test` (fails: no test specified).
+
+### 2026-02-02 08:00:05
+- Added QA checklist and manual test script in `docs/test-plan.md`.
+- Checked off the QA checklist criterion in `RALPH_TASK.md`.
+- Tests: `npm test` (fails: no test specified).

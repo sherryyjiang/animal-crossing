@@ -48,7 +48,7 @@ Use `PLAN.md` as the source of truth. This task file expands it into actionable 
 - [x] Add developer panel for inspecting memory + day logs. <!-- group: 8 -->
 - [x] Add synthetic chat harness to validate memory behavior. <!-- group: 8 -->
 - [x] UX polish: transitions, dialogue pacing, ambient animation. <!-- group: 9 -->
-- [ ] QA checklist + manual test script in `docs/test-plan.md`. <!-- group: 9 -->
+- [x] QA checklist + manual test script in `docs/test-plan.md`. <!-- group: 9 -->
 
 ---
 
