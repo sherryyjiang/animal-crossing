@@ -4,7 +4,7 @@ import { getActiveDayIndex } from "../logs/conversation-log";
 import { getNpcRoster } from "../npc-roster";
 import { getMemoryFacts, initializeMemoryStore, replaceAllMemoryFacts } from "./memory-store";
 import type { ConversationEntry } from "../logs/conversation-log";
-import type { MemoryExtractionResult, MemoryFact, MemoryFactType } from "./memory-types";
+import type { MemoryAnchor, MemoryExtractionResult, MemoryFact, MemoryFactType, MemoryLink } from "./memory-types";
 
 const log = debug("ralph:memory-pipeline");
 
@@ -25,6 +25,7 @@ const memoryFactSchema = z.object({
     "relationship",
     "schedule",
     "goal",
+    "task",
     "item",
     "event",
   ]),
@@ -32,6 +33,37 @@ const memoryFactSchema = z.object({
   tags: z.array(z.string()),
   salience: z.number().min(0).max(1),
   mentions: z.number().int().min(1).optional().default(1),
+  status: z.enum(["open", "done"]).optional(),
+  threadId: z.string().min(1).optional(),
+  threadSequence: z.number().int().min(1).optional(),
+  anchors: z
+    .array(
+      z.object({
+        type: z.enum([
+          "person",
+          "genre",
+          "activity",
+          "time",
+          "place",
+          "item",
+          "project",
+          "event",
+          "goal",
+          "title",
+          "topic",
+        ]),
+        value: z.string().min(1),
+      })
+    )
+    .optional(),
+  links: z
+    .array(
+      z.object({
+        targetId: z.string().min(1),
+        label: z.string().min(1),
+      })
+    )
+    .optional(),
   createdAt: z.string().min(1),
   lastMentionedAt: z.string().min(1),
 });
@@ -53,6 +85,16 @@ const emotionKeywords = [
 
 const preferenceVerbs = ["love", "like", "enjoy", "prefer", "favorite"];
 const goalPhrases = ["want to", "plan to", "hope to", "trying to", "aim to"];
+const taskPhrases = ["need to", "have to", "must", "gotta", "should"];
+const requestPhrases = [
+  "i'd like you to",
+  "i would like you to",
+  "id like you to",
+  "i want you to",
+  "could you",
+  "can you",
+  "please",
+];
 const relationshipKeywords = [
   "friend",
   "friends",
@@ -81,7 +123,17 @@ const scheduleKeywords = [
   "on sunday",
 ];
 const itemVerbs = ["bought", "picked up", "got", "need", "looking for", "found"];
-const eventVerbs = ["went", "visited", "met", "finished", "started", "helped", "built"];
+const eventVerbs = [
+  "went",
+  "visited",
+  "met",
+  "finished",
+  "completed",
+  "wrapped up",
+  "started",
+  "helped",
+  "built",
+];
 
 const placeLexicon: LexiconEntry[] = [
   { value: "community hall", aliases: ["community hall", "hall"] },
@@ -135,7 +187,7 @@ const plantLexicon: LexiconEntry[] = [
 const productLexicon: LexiconEntry[] = [
   { value: "compost tea", aliases: ["compost tea", "compost-tea"] },
   { value: "blueprint", aliases: ["blueprint"] },
-  { value: "checklist", aliases: ["checklist", "list"] },
+  { value: "checklist", aliases: ["checklist"] },
 ];
 
 const personLexicon: LexiconEntry[] = getNpcRoster().map((npc) => ({
@@ -163,14 +215,17 @@ export async function extractAndStoreMemories(
   }
 
   const existingFacts = getMemoryFacts();
-  const mergedFacts = mergeMemoryFacts(existingFacts, validatedFacts);
-  await replaceAllMemoryFacts(mergedFacts);
+  const threadedFacts = assignThreadInfo(validatedFacts, existingFacts);
+  const linkedFacts = attachMemoryLinks(threadedFacts, existingFacts);
+  const mergedFacts = mergeMemoryFacts(existingFacts, linkedFacts);
+  const finalizedFacts = applyTaskCompletions(mergedFacts, linkedFacts);
+  await replaceAllMemoryFacts(finalizedFacts);
 
   log("memory extraction added %d facts (npc=%s)", validatedFacts.length, npcId);
 
   return {
-    addedFacts: validatedFacts,
-    totalFacts: mergedFacts.length,
+    addedFacts: linkedFacts,
+    totalFacts: finalizedFacts.length,
   };
 }
 
@@ -204,7 +259,7 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
   });
 
   const preferenceMatch = findVerbObject(lowered, preferenceVerbs);
-  if (preferenceMatch) {
+  if (preferenceMatch && !isPreferenceRequest(lowered, preferenceMatch)) {
     candidates.push(
       createMemoryFact({
         npcId,
@@ -219,6 +274,48 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
         }),
         sourceText: rawText,
         timestamp,
+      })
+    );
+  }
+
+  const taskMatch = findPhrase(lowered, taskPhrases);
+  if (taskMatch) {
+    candidates.push(
+      createMemoryFact({
+        npcId,
+        type: "task",
+        content: formatTaskContent(taskMatch.phrase, taskMatch.tail),
+        tags: buildTags({
+          type: "task",
+          rawText,
+          npcId,
+          dayIndex,
+          detailTags: [createTag("task", taskMatch.tail)],
+        }),
+        sourceText: rawText,
+        timestamp,
+        status: "open",
+      })
+    );
+  }
+
+  const requestMatch = findPhrase(lowered, requestPhrases);
+  if (requestMatch) {
+    candidates.push(
+      createMemoryFact({
+        npcId,
+        type: "task",
+        content: formatRequestTaskContent(requestMatch.phrase, requestMatch.tail),
+        tags: buildTags({
+          type: "task",
+          rawText,
+          npcId,
+          dayIndex,
+          detailTags: [createTag("task", requestMatch.tail)],
+        }),
+        sourceText: rawText,
+        timestamp,
+        status: "open",
       })
     );
   }
@@ -388,12 +485,25 @@ function mergeMemoryFacts(existingFacts: MemoryFact[], incomingFacts: MemoryFact
       0,
       1
     );
+    const mergedLinks = mergeLinks(existing.links, fact.links);
+    const mergedAnchors = mergeAnchors(existing.anchors, fact.anchors);
+    const mergedStatus =
+      existing.status === "done" || fact.status === "done"
+        ? "done"
+        : existing.status ?? fact.status;
+    const threadId = existing.threadId ?? fact.threadId;
+    const threadSequence = Math.max(existing.threadSequence ?? 0, fact.threadSequence ?? 0) || undefined;
     merged.set(key, {
       ...existing,
       salience: Math.max(existing.salience, combinedSalience),
       mentions: combinedMentions,
       lastMentionedAt: fact.lastMentionedAt,
       tags: mergeTags(existing.tags, fact.tags),
+      status: mergedStatus,
+      threadId,
+      threadSequence,
+      anchors: mergedAnchors.length > 0 ? mergedAnchors : existing.anchors,
+      links: mergedLinks.length > 0 ? mergedLinks : existing.links,
     });
   });
 
@@ -412,9 +522,11 @@ function createMemoryFact(input: {
   tags: string[];
   sourceText: string;
   timestamp: string;
+  status?: "open" | "done";
 }): MemoryFact {
   const normalized = normalizeText(input.content);
   const salience = scoreSalience(input.type, input.sourceText);
+  const anchors = buildAnchors(input.tags, input.sourceText);
 
   return {
     id: createMemoryFactId(input.npcId, input.type, normalized),
@@ -424,9 +536,101 @@ function createMemoryFact(input: {
     tags: input.tags,
     salience,
     mentions: 1,
+    status: input.status,
+    anchors,
     createdAt: input.timestamp,
     lastMentionedAt: input.timestamp,
   };
+}
+
+function formatTaskContent(phrase: string, tail: string) {
+  const normalizedPhrase = phrase.toLowerCase();
+  const verb = {
+    "need to": "needs to",
+    "have to": "has to",
+    "gotta": "has to",
+    must: "must",
+    should: "should",
+  }[normalizedPhrase];
+  const resolved = verb ?? normalizedPhrase;
+  return `Player ${resolved} ${tail}.`;
+}
+
+function formatRequestTaskContent(phrase: string, tail: string) {
+  const normalized = phrase.toLowerCase();
+  const usesWant = normalized.startsWith("i ") || normalized.startsWith("i'");
+  const verb = usesWant ? "wants you to" : "asked you to";
+  return `Player ${verb} ${tail}.`;
+}
+
+function isPreferenceRequest(text: string, match: { verb: string }) {
+  if (match.verb !== "like") return false;
+  return /\blike you to\b/.test(text);
+}
+
+function buildAnchors(tags: string[], rawText: string): MemoryAnchor[] {
+  const anchors: MemoryAnchor[] = [];
+  const seen = new Set<string>();
+
+  const pushAnchor = (type: MemoryAnchor["type"], value: string) => {
+    const normalized = normalizeTagValue(value);
+    if (!normalized) return;
+    const key = `${type}:${normalized}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    anchors.push({ type, value: normalized });
+  };
+
+  tags.forEach((tag) => {
+    const [group, value] = splitTag(tag);
+    if (!group || !value) return;
+    switch (group) {
+      case "person":
+        pushAnchor("person", value);
+        break;
+      case "genre":
+        pushAnchor("genre", value);
+        break;
+      case "activity":
+        pushAnchor("activity", value);
+        break;
+      case "schedule":
+        pushAnchor("time", value);
+        break;
+      case "place":
+        pushAnchor("place", value);
+        break;
+      case "item":
+        pushAnchor("item", value);
+        break;
+      case "project":
+        pushAnchor("project", value);
+        break;
+      case "event":
+        pushAnchor("event", value);
+        break;
+      case "goal":
+        pushAnchor("goal", value);
+        break;
+      case "title":
+        pushAnchor("title", value);
+        break;
+      case "task":
+        pushAnchor("topic", value);
+        break;
+      default:
+        break;
+    }
+  });
+
+  if (anchors.length === 0) {
+    const fallback = normalizeTagValue(rawText).split("-").slice(0, 5).join("-");
+    if (fallback) {
+      pushAnchor("topic", fallback);
+    }
+  }
+
+  return anchors;
 }
 
 function scoreSalience(type: MemoryFactType, text: string) {
@@ -436,6 +640,7 @@ function scoreSalience(type: MemoryFactType, text: string) {
     relationship: 0.46,
     schedule: 0.4,
     goal: 0.44,
+    task: 0.5,
     item: 0.38,
     event: 0.42,
   };
@@ -490,6 +695,186 @@ function mergeTags(existing: string[], incoming: string[]) {
   return Array.from(new Set([...existing, ...incoming]));
 }
 
+function mergeLinks(existing?: MemoryLink[], incoming?: MemoryLink[]) {
+  const merged = new Map<string, MemoryLink>();
+  (existing ?? []).forEach((link) => {
+    merged.set(`${link.targetId}:${link.label}`, link);
+  });
+  (incoming ?? []).forEach((link) => {
+    merged.set(`${link.targetId}:${link.label}`, link);
+  });
+  return Array.from(merged.values());
+}
+
+function mergeAnchors(existing?: MemoryAnchor[], incoming?: MemoryAnchor[]) {
+  const merged = new Map<string, MemoryAnchor>();
+  (existing ?? []).forEach((anchor) => {
+    merged.set(`${anchor.type}:${anchor.value}`, anchor);
+  });
+  (incoming ?? []).forEach((anchor) => {
+    merged.set(`${anchor.type}:${anchor.value}`, anchor);
+  });
+  return Array.from(merged.values());
+}
+
+function assignThreadInfo(
+  facts: MemoryFact[],
+  existingFacts: MemoryFact[]
+): MemoryFact[] {
+  if (facts.length === 0) return facts;
+
+  const maxSequences = new Map<string, number>();
+  existingFacts.forEach((fact) => {
+    if (!fact.threadId) return;
+    const seq = fact.threadSequence ?? 1;
+    const current = maxSequences.get(fact.threadId) ?? 0;
+    if (seq > current) maxSequences.set(fact.threadId, seq);
+  });
+
+  const nextSequences = new Map<string, number>();
+  return facts.map((fact) => {
+    const threadKey = deriveThreadKey(fact.tags, fact.content);
+    if (!threadKey) return fact;
+    const threadId = `${fact.npcId}:${threadKey}`;
+    const next =
+      nextSequences.get(threadId) ?? (maxSequences.get(threadId) ?? 0) + 1;
+    nextSequences.set(threadId, next);
+    return {
+      ...fact,
+      threadId,
+      threadSequence: next,
+    };
+  });
+}
+
+function attachMemoryLinks(
+  incomingFacts: MemoryFact[],
+  existingFacts: MemoryFact[]
+): MemoryFact[] {
+  if (incomingFacts.length === 0) return incomingFacts;
+  const allFacts = [...existingFacts, ...incomingFacts];
+  const anchorCache = new Map<string, Set<string>>();
+
+  const getAnchorKeys = (fact: MemoryFact) => {
+    if (anchorCache.has(fact.id)) {
+      return anchorCache.get(fact.id) as Set<string>;
+    }
+    const anchors = fact.anchors ?? buildAnchors(fact.tags, fact.content);
+    const keys = new Set(anchors.map((anchor) => `${anchor.type}:${anchor.value}`));
+    anchorCache.set(fact.id, keys);
+    return keys;
+  };
+
+  return incomingFacts.map((fact) => {
+    const links: MemoryLink[] = [];
+    const anchorKeys = getAnchorKeys(fact);
+    const related = allFacts
+      .filter((other) => other.id !== fact.id)
+      .map((other) => {
+        const otherKeys = getAnchorKeys(other);
+        const overlap = countOverlap(anchorKeys, otherKeys);
+        const isContext = fact.createdAt === other.createdAt;
+        if (!isContext && overlap === 0) return null;
+        const label = isContext ? "context" : chooseLinkLabel(fact, other);
+        return { other, overlap, label };
+      })
+      .filter((candidate): candidate is { other: MemoryFact; overlap: number; label: string } => Boolean(candidate));
+
+    related.sort((left, right) => {
+      if (left.overlap !== right.overlap) return right.overlap - left.overlap;
+      return right.other.lastMentionedAt.localeCompare(left.other.lastMentionedAt);
+    });
+
+    const limited = related.slice(0, 4);
+    limited.forEach((candidate) => {
+      links.push({ targetId: candidate.other.id, label: candidate.label });
+    });
+
+    const merged = mergeLinks(fact.links, links);
+    return merged.length > 0 ? { ...fact, links: merged } : fact;
+  });
+}
+
+function applyTaskCompletions(
+  facts: MemoryFact[],
+  incomingFacts: MemoryFact[]
+): MemoryFact[] {
+  const completionSignals = incomingFacts.filter((fact) => isCompletionFact(fact));
+  if (completionSignals.length === 0) return facts;
+
+  return facts.map((fact) => {
+    if (fact.type !== "task" || fact.status === "done") return fact;
+    const matches = completionSignals.some((signal) => hasAnchorOverlap(fact, signal));
+    if (!matches) return fact;
+    return { ...fact, status: "done" as const };
+  });
+}
+
+function isCompletionFact(fact: MemoryFact) {
+  if (fact.type !== "event") return false;
+  const lowered = fact.content.toLowerCase();
+  return (
+    lowered.includes("finished") ||
+    lowered.includes("completed") ||
+    lowered.includes("wrapped up") ||
+    lowered.includes("done")
+  );
+}
+
+function hasAnchorOverlap(left: MemoryFact, right: MemoryFact) {
+  const leftAnchors = new Set((left.anchors ?? []).map((anchor) => `${anchor.type}:${anchor.value}`));
+  if (leftAnchors.size === 0) return false;
+  const rightAnchors = new Set((right.anchors ?? []).map((anchor) => `${anchor.type}:${anchor.value}`));
+  return countOverlap(leftAnchors, rightAnchors) > 0;
+}
+
+function countOverlap(left: Set<string>, right: Set<string>) {
+  let count = 0;
+  left.forEach((value) => {
+    if (right.has(value)) count += 1;
+  });
+  return count;
+}
+
+function chooseLinkLabel(left: MemoryFact, right: MemoryFact) {
+  const leftTypes = new Set((left.anchors ?? []).map((anchor) => anchor.type));
+  const rightTypes = new Set((right.anchors ?? []).map((anchor) => anchor.type));
+
+  if (leftTypes.has("title") && rightTypes.has("person")) return "created by";
+  if (leftTypes.has("person") && rightTypes.has("title")) return "creator of";
+  if (leftTypes.has("genre") && rightTypes.has("person")) return "artist in genre";
+  if (leftTypes.has("person") && rightTypes.has("genre")) return "genre of artist";
+  return "related to";
+}
+
+function deriveThreadKey(tags: string[], content: string) {
+  const priorityGroups = [
+    "task",
+    "goal",
+    "project",
+    "event",
+    "activity",
+    "place",
+    "person",
+    "genre",
+    "item",
+    "title",
+    "schedule",
+  ];
+
+  for (const group of priorityGroups) {
+    const tag = tags.find((value) => value.startsWith(`${group}:`));
+    if (!tag) continue;
+    const [, rawValue] = splitTag(tag);
+    if (!rawValue || rawValue === "general") continue;
+    return `${group}:${rawValue}`;
+  }
+
+  const fallback = normalizeTagValue(content).split("-").slice(0, 5).join("-");
+  if (!fallback) return null;
+  return `topic:${fallback}`;
+}
+
 function buildTags(input: {
   type: MemoryFactType;
   rawText: string;
@@ -508,6 +893,8 @@ function buildTags(input: {
 
 function extractSemanticTags(text: string) {
   const lowered = text.toLowerCase();
+  const personTags = collectPersonTags(text);
+  const titleTags = collectTitleTags(text, personTags);
   const tags = [
     ...collectLexiconTags(lowered, placeLexicon, "place"),
     ...collectLexiconTags(lowered, personLexicon, "person"),
@@ -517,6 +904,9 @@ function extractSemanticTags(text: string) {
     ...collectLexiconTags(lowered, toolLexicon, "tool"),
     ...collectLexiconTags(lowered, plantLexicon, "plant"),
     ...collectLexiconTags(lowered, productLexicon, "product"),
+    ...collectGenreTags(lowered),
+    ...personTags,
+    ...titleTags,
   ];
   return Array.from(new Set(tags));
 }
@@ -532,8 +922,88 @@ function collectLexiconTags(text: string, lexicon: LexiconEntry[], group: string
   return matches;
 }
 
+function collectGenreTags(text: string) {
+  const matches: string[] = [];
+  const regex = /\b([a-z]+(?:\s+[a-z]+)?)\s+music\b/g;
+  let match: RegExpExecArray | null = regex.exec(text);
+  while (match) {
+    const value = match[0].trim();
+    if (value) {
+      matches.push(createTag("genre", value));
+    }
+    match = regex.exec(text);
+  }
+  return matches;
+}
+
+function collectPersonTags(text: string) {
+  const matches: string[] = [];
+  const regex = /\bby\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/g;
+  let match: RegExpExecArray | null = regex.exec(text);
+  while (match) {
+    const value = match[1]?.trim();
+    if (value && !isTimeWord(value)) {
+      matches.push(createTag("person", value));
+    }
+    match = regex.exec(text);
+  }
+  return matches;
+}
+
+function collectTitleTags(text: string, personTags: string[]) {
+  const matches: string[] = [];
+  const stopTitles = new Set(["I", "Im", "I'm", "The"]);
+  const personValues = new Set(personTags.map((tag) => splitTag(tag)[1] ?? ""));
+
+  const quoteRegex = /\"([^\"]+)\"/g;
+  let match: RegExpExecArray | null = quoteRegex.exec(text);
+  while (match) {
+    const value = match[1]?.trim();
+    if (value) {
+      matches.push(createTag("title", value));
+    }
+    match = quoteRegex.exec(text);
+  }
+
+  const titleRegex = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b/g;
+  match = titleRegex.exec(text);
+  while (match) {
+    const value = match[1]?.trim();
+    if (value && !stopTitles.has(value)) {
+      const normalized = normalizeTagValue(value);
+      if (!personValues.has(normalized)) {
+        matches.push(createTag("title", value));
+      }
+    }
+    match = titleRegex.exec(text);
+  }
+
+  return matches;
+}
+
+function isTimeWord(value: string) {
+  const normalized = value.toLowerCase();
+  return (
+    normalized === "monday" ||
+    normalized === "tuesday" ||
+    normalized === "wednesday" ||
+    normalized === "thursday" ||
+    normalized === "friday" ||
+    normalized === "saturday" ||
+    normalized === "sunday" ||
+    normalized === "today" ||
+    normalized === "tomorrow"
+  );
+}
+
 function createTag(group: string, value: string) {
   return `${group}:${normalizeTagValue(value)}`;
+}
+
+function splitTag(tag: string) {
+  const [group, ...rest] = tag.split(":");
+  if (!group || rest.length === 0) return [null, null] as const;
+  return [group, rest.join(":")] as const;
 }
 
 function normalizeTagValue(value: string) {

@@ -20,6 +20,7 @@ const SYSTEM_GUIDELINES = [
   "Stay in character and speak in first person.",
   "Keep replies to 1-3 sentences.",
   "Ask one gentle follow-up question when it fits.",
+  "If there is an active task or thread, prioritize the next-step question.",
   "Avoid repeating the player's words verbatim.",
 ];
 

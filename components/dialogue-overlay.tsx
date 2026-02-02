@@ -249,8 +249,10 @@ function createNpcReplySession(
 
 function createGreeting(npcName: string, memoryContext: NpcMemoryContext) {
   const recall = formatMemoryRecall(memoryContext.topMemories[0]);
-  const recallLine = recall ? ` ${recall}` : " What would you like to share today?";
-  return `${npcName} ${memoryContext.profile.greetingStyle}${recallLine}`;
+  const focusQuestion = memoryContext.focusQuestion;
+  const recallLine = recall ? ` ${recall}` : "";
+  const questionLine = focusQuestion ? ` ${focusQuestion}` : " What would you like to share today?";
+  return `${npcName} ${memoryContext.profile.greetingStyle}${recallLine}${questionLine}`;
 }
 
 async function generateNpcReply(session: DialogueSession, playerText: string) {

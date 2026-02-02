@@ -3,6 +3,7 @@ import { getActiveDayIndex, getRecentEntriesForNpc } from "../logs/conversation-
 import type { ConversationEntry } from "../logs/conversation-log";
 import { getMemoryFactsForNpc, initializeMemoryStore } from "./memory-store";
 import type { MemoryFact } from "./memory-types";
+import { loadPlayerProfile, type PlayerInsight } from "./player-profile";
 import { getNpcPersonalityProfile } from "./npc-personality";
 import type { NpcPersonalityProfile } from "./npc-personality";
 
@@ -17,11 +18,26 @@ export async function buildNpcMemoryContext(input: NpcMemoryContextInput): Promi
     input.recentConversationLimit ?? 4
   );
   const topMemories = memories.slice(0, input.memoryLimit ?? 4);
+  const linkedMemories = collectLinkedMemories(
+    topMemories,
+    memories,
+    input.linkedMemoryLimit ?? 3
+  );
+  const activeTask = selectActiveTask(memories);
+  const focusQuestion = activeTask ? buildFocusQuestion(activeTask) : null;
+  const activeThread = deriveActiveThread(activeTask ?? topMemories[0], memories);
+  const playerProfile = await loadPlayerProfile().catch(() => null);
+  const playerInsights = playerProfile?.insights ?? [];
   const prompt = buildNpcPersonalityPrompt({
     npcName: input.npcName,
     npcRole: input.npcRole,
     profile,
     memories: topMemories,
+    linkedMemories,
+    activeTask,
+    focusQuestion,
+    activeThread,
+    playerInsights,
     recentConversation,
   });
 
@@ -33,12 +49,29 @@ export async function buildNpcMemoryContext(input: NpcMemoryContextInput): Promi
     profile,
     prompt,
     topMemories,
+    linkedMemories,
+    activeTask,
+    focusQuestion: focusQuestion ?? undefined,
+    activeThread,
+    playerInsights,
     recentConversation,
   };
 }
 
 export function buildNpcPersonalityPrompt(input: NpcPromptInput): string {
   const memoryLines = input.memories.map((fact) => `- ${formatMemoryFact(fact)}`).join("\n");
+  const linkedLines = input.linkedMemories
+    .map((fact) => `- ${formatMemoryFact(fact)}`)
+    .join("\n");
+  const insightLines = input.playerInsights
+    .slice(0, 3)
+    .map((insight) => `- (${insight.category}) ${insight.text}`)
+    .join("\n");
+  const taskLine = input.activeTask ? `Active task: ${formatMemoryFact(input.activeTask)}` : "";
+  const threadLine = input.activeThread
+    ? `Thread ${input.activeThread.sequence}: ${input.activeThread.label}`
+    : "";
+  const focusLine = input.focusQuestion ? `Suggested follow-up: ${input.focusQuestion}` : "";
   const conversationLines = input.recentConversation
     .map((entry) => `- ${formatConversationEntry(entry)}`)
     .join("\n");
@@ -48,7 +81,13 @@ export function buildNpcPersonalityPrompt(input: NpcPromptInput): string {
     `${input.profile.title}. Tone: ${input.profile.tone}.`,
     `Focus: ${input.profile.focus}.`,
     input.profile.promptGuidance,
+    "Be proactive: infer the player's current goal or task and ask the most helpful next question.",
     memoryLines ? `Key memories:\n${memoryLines}` : "Key memories: none yet.",
+    linkedLines ? `Linked memories:\n${linkedLines}` : "",
+    insightLines ? `Player insights:\n${insightLines}` : "",
+    taskLine,
+    threadLine,
+    focusLine,
     conversationLines
       ? `Recent conversation snippets:\n${conversationLines}`
       : "Recent conversation snippets: none yet.",
@@ -104,6 +143,11 @@ export interface NpcMemoryContext {
   profile: NpcPersonalityProfile;
   prompt: string;
   topMemories: MemoryFact[];
+  linkedMemories?: MemoryFact[];
+  activeTask?: MemoryFact | null;
+  focusQuestion?: string;
+  activeThread?: MemoryThreadSnapshot | null;
+  playerInsights?: PlayerInsight[];
   recentConversation: ConversationEntry[];
 }
 
@@ -113,6 +157,7 @@ export interface NpcMemoryContextInput {
   npcRole: string;
   memoryLimit?: number;
   recentConversationLimit?: number;
+  linkedMemoryLimit?: number;
 }
 
 interface NpcPromptInput {
@@ -120,5 +165,93 @@ interface NpcPromptInput {
   npcRole: string;
   profile: NpcPersonalityProfile;
   memories: MemoryFact[];
+  linkedMemories: MemoryFact[];
+  activeTask: MemoryFact | null;
+  focusQuestion: string | null;
+  activeThread: MemoryThreadSnapshot | null;
+  playerInsights: PlayerInsight[];
   recentConversation: ConversationEntry[];
+}
+
+interface MemoryThreadSnapshot {
+  id: string;
+  sequence: number;
+  label: string;
+}
+
+function collectLinkedMemories(
+  topMemories: MemoryFact[],
+  allMemories: MemoryFact[],
+  limit: number
+) {
+  if (topMemories.length === 0) return [];
+  const idSet = new Set(topMemories.map((fact) => fact.id));
+  const linkedIds = new Set<string>();
+
+  topMemories.forEach((fact) => {
+    (fact.links ?? []).forEach((link) => {
+      if (!idSet.has(link.targetId)) linkedIds.add(link.targetId);
+    });
+  });
+
+  allMemories.forEach((fact) => {
+    (fact.links ?? []).forEach((link) => {
+      if (idSet.has(link.targetId) && !idSet.has(fact.id)) {
+        linkedIds.add(fact.id);
+      }
+    });
+  });
+
+  const linked = allMemories.filter((fact) => linkedIds.has(fact.id));
+  return linked.slice(0, limit);
+}
+
+function selectActiveTask(memories: MemoryFact[]) {
+  const tasks = memories.filter((fact) => fact.type === "task" && fact.status !== "done");
+  if (tasks.length === 0) return null;
+  return tasks.sort((left, right) => {
+    if (left.salience !== right.salience) return right.salience - left.salience;
+    return right.lastMentionedAt.localeCompare(left.lastMentionedAt);
+  })[0] ?? null;
+}
+
+function buildFocusQuestion(fact: MemoryFact) {
+  const cleaned = stripPlayerPrefix(fact.content);
+  const action = stripLeadingIntent(cleaned);
+  if (!action) {
+    return "Want to keep working on that?";
+  }
+  return `Want to keep working on ${action}?`;
+}
+
+function deriveActiveThread(
+  anchorFact: MemoryFact | undefined,
+  memories: MemoryFact[]
+): MemoryThreadSnapshot | null {
+  if (!anchorFact?.threadId) return null;
+  const related = memories.filter((fact) => fact.threadId === anchorFact.threadId);
+  const sequence = Math.max(...related.map((fact) => fact.threadSequence ?? 1), 1);
+  const label = humanizeThreadLabel(anchorFact.threadId);
+  return {
+    id: anchorFact.threadId,
+    sequence,
+    label,
+  };
+}
+
+function humanizeThreadLabel(threadId: string) {
+  const parts = threadId.split(":").slice(1);
+  if (parts.length === 0) return "ongoing thread";
+  return parts.join(" ").replace(/-/g, " ").trim();
+}
+
+function stripPlayerPrefix(text: string) {
+  return text.replace(/^player\s+/i, "");
+}
+
+function stripLeadingIntent(text: string) {
+  return text
+    .replace(/^(needs to|need to|has to|have to|must|should|wants to|want to|plans to|plan to|trying to|aim to)\s+/i, "")
+    .replace(/[.!?]+$/, "")
+    .trim();
 }
