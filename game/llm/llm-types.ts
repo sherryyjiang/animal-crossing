@@ -66,8 +66,51 @@ export interface LlmSummaryResult {
   raw: unknown;
 }
 
+export type PlayerInsightCategory =
+  | "preference"
+  | "goal"
+  | "value"
+  | "habit"
+  | "interest"
+  | "style";
+
+export interface LlmPlayerInsight {
+  text: string;
+  category: PlayerInsightCategory;
+}
+
+export interface LlmPlayerInsightInput {
+  dayIndex: number;
+  conversation: LlmMessage[];
+  maxInsights?: number;
+}
+
+export interface LlmPlayerInsightResult {
+  insights: LlmPlayerInsight[];
+  raw: unknown;
+}
+
+export interface LlmDaySuggestion {
+  title: string;
+  detail: string;
+}
+
+export interface LlmDayKickoffInput {
+  dayIndex: number;
+  previousSummary: string;
+  playerInsights?: LlmPlayerInsight[];
+  maxSuggestions?: number;
+}
+
+export interface LlmDayKickoffResult {
+  suggestions: LlmDaySuggestion[];
+  raw: unknown;
+}
+
 export interface LlmAdapter {
   generateReply: (input: LlmChatInput) => Promise<LlmChatResult>;
   extractFacts: (input: LlmFactInput) => Promise<LlmFactResult>;
   summarizeDay: (input: LlmSummaryInput) => Promise<LlmSummaryResult>;
+  analyzePlayer: (input: LlmPlayerInsightInput) => Promise<LlmPlayerInsightResult>;
+  suggestNextDay: (input: LlmDayKickoffInput) => Promise<LlmDayKickoffResult>;
 }

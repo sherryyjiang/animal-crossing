@@ -6,9 +6,15 @@ import type {
   LlmChatInput,
   LlmChatResult,
   LlmConfig,
+  LlmDayKickoffInput,
+  LlmDayKickoffResult,
+  LlmDaySuggestion,
   LlmFactInput,
   LlmFactResult,
   LlmMessage,
+  LlmPlayerInsight,
+  LlmPlayerInsightInput,
+  LlmPlayerInsightResult,
   LlmSummaryInput,
   LlmSummaryResult,
 } from "./llm-types";
@@ -35,6 +41,31 @@ const chatResponseSchema = z.object({
 
 const factsSchema = z.array(z.string().min(1)).max(12);
 
+const playerInsightSchema = z.object({
+  text: z.string().min(1),
+  category: z.enum([
+    "preference",
+    "goal",
+    "value",
+    "habit",
+    "interest",
+    "style",
+  ]),
+});
+
+const playerInsightsSchema = z.object({
+  insights: z.array(playerInsightSchema).max(6),
+});
+
+const daySuggestionSchema = z.object({
+  title: z.string().min(1),
+  detail: z.string().min(1),
+});
+
+const daySuggestionsSchema = z.object({
+  suggestions: z.array(daySuggestionSchema).max(6),
+});
+
 export const llmAdapter: LlmAdapter = {
   async generateReply(input) {
     const { config, apiKey } = await getResolvedLlmConfig();
@@ -47,6 +78,14 @@ export const llmAdapter: LlmAdapter = {
   async summarizeDay(input) {
     const { config, apiKey } = await getResolvedLlmConfig();
     return requestSummary(config, apiKey, input);
+  },
+  async analyzePlayer(input) {
+    const { config, apiKey } = await getResolvedLlmConfig();
+    return requestPlayerInsights(config, apiKey, input);
+  },
+  async suggestNextDay(input) {
+    const { config, apiKey } = await getResolvedLlmConfig();
+    return requestDayKickoff(config, apiKey, input);
   },
 };
 
@@ -122,6 +161,89 @@ async function requestSummary(
   });
 
   return { summary: response.text.trim(), raw: response.raw };
+}
+
+async function requestPlayerInsights(
+  config: LlmConfig,
+  apiKey: string,
+  input: LlmPlayerInsightInput
+): Promise<LlmPlayerInsightResult> {
+  const systemPrompt = [
+    "You analyze the player's interactions in a cozy village sim.",
+    "Extract 2-4 concise insights about the player.",
+    "Use only what the player said or implied.",
+    "Categories: preference, goal, value, habit, interest, style.",
+    "Return JSON only with shape: {\"insights\":[{\"text\":\"...\",\"category\":\"preference\"}]}",
+    "If unsure, return an empty insights array.",
+  ].join("\n");
+
+  const messages = buildChatMessages(systemPrompt, [
+    {
+      role: "user",
+      content: formatConversation(input.conversation),
+    },
+  ]);
+
+  const response = await requestChatCompletion(config, apiKey, {
+    messages,
+    temperature: 0.2,
+    maxTokens: Math.min(config.maxCompletionTokens, 280),
+  });
+
+  const parsed = parseJsonObject(response.text);
+  const validated = parsed ? playerInsightsSchema.safeParse(parsed) : null;
+  if (!validated || !validated.success) {
+    log("Invalid player insights response %o", validated?.error?.format?.() ?? parsed);
+    return { insights: [], raw: response.raw };
+  }
+
+  return {
+    insights: validated.data.insights.slice(0, input.maxInsights ?? 4),
+    raw: response.raw,
+  };
+}
+
+async function requestDayKickoff(
+  config: LlmConfig,
+  apiKey: string,
+  input: LlmDayKickoffInput
+): Promise<LlmDayKickoffResult> {
+  const systemPrompt = [
+    "You are a cozy village guide.",
+    "Suggest 3-5 next-day activities based on yesterday's summary and player insights.",
+    "Keep each suggestion warm, concrete, and short.",
+    "Return JSON only with shape: {\"suggestions\":[{\"title\":\"...\",\"detail\":\"...\"}]}",
+  ].join("\n");
+
+  const insightLines = (input.playerInsights ?? []).map(
+    (insight) => `- (${insight.category}) ${insight.text}`
+  );
+
+  const userPrompt = [
+    `Day index: ${input.dayIndex}.`,
+    `Yesterday summary: ${input.previousSummary || "No summary available."}`,
+    insightLines.length > 0 ? `Player insights:\n${insightLines.join("\n")}` : "Player insights: none.",
+  ].join("\n");
+
+  const messages = buildChatMessages(systemPrompt, [{ role: "user", content: userPrompt }]);
+
+  const response = await requestChatCompletion(config, apiKey, {
+    messages,
+    temperature: 0.4,
+    maxTokens: Math.min(config.maxCompletionTokens, 260),
+  });
+
+  const parsed = parseJsonObject(response.text);
+  const validated = parsed ? daySuggestionsSchema.safeParse(parsed) : null;
+  if (!validated || !validated.success) {
+    log("Invalid day kickoff response %o", validated?.error?.format?.() ?? parsed);
+    return { suggestions: [], raw: response.raw };
+  }
+
+  return {
+    suggestions: validated.data.suggestions.slice(0, input.maxSuggestions ?? 5),
+    raw: response.raw,
+  };
 }
 
 async function requestChatCompletion(
@@ -215,6 +337,14 @@ function parseJsonArray(text: string) {
   const end = cleaned.lastIndexOf("]");
   if (start === -1 || end === -1 || end <= start) return [];
   return parseJson(cleaned.slice(start, end + 1)) ?? [];
+}
+
+function parseJsonObject(text: string) {
+  const cleaned = stripCodeFences(text);
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  return parseJson(cleaned.slice(start, end + 1));
 }
 
 function stripCodeFences(text: string) {

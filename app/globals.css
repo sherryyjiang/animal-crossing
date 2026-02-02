@@ -285,33 +285,281 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(240, 230, 218, 0.8);
+  background: radial-gradient(circle at top, rgba(255, 246, 235, 0.95), rgba(233, 220, 206, 0.92));
   padding: 24px;
   z-index: 6;
   animation: overlay-fade-in 220ms ease-out;
 }
 
 .day-summary-panel {
-  width: min(560px, 92vw);
-  background: var(--ui-panel);
-  border-radius: 20px;
-  padding: 24px;
+  width: min(720px, 92vw);
+  background: linear-gradient(160deg, rgba(255, 248, 238, 0.98), rgba(249, 236, 223, 0.92));
+  border-radius: 26px;
+  padding: 24px 26px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 24px 48px rgba(107, 95, 90, 0.18);
+  gap: 18px;
+  box-shadow: 0 30px 60px rgba(107, 95, 90, 0.18);
   animation: panel-rise-in 260ms ease-out;
+  border: 1px solid rgba(210, 191, 170, 0.5);
+}
+
+.day-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.day-summary-kicker {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ui-ink-muted);
 }
 
 .day-summary-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
+  font-family: "Fraunces", "Nunito", serif;
+  color: #5c4a3f;
+}
+
+.day-summary-subtitle {
+  font-size: 13px;
+  color: var(--ui-ink-muted);
+}
+
+.day-summary-avatars {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.npc-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f2d8e4;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 18px rgba(107, 95, 90, 0.18);
+  position: relative;
+}
+
+.npc-badge-face {
+  width: 22px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+}
+
+.npc-badge-eye {
+  width: 4px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(90, 80, 72, 0.7);
+}
+
+.npc-badge-blush {
+  position: absolute;
+  right: 2px;
+  bottom: -4px;
+  width: 8px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(244, 178, 196, 0.6);
+}
+
+.npc-badge[data-npc-id="mira"] {
+  background: #f6c0d6;
+}
+
+.npc-badge[data-npc-id="theo"] {
+  background: #bfe4f4;
+}
+
+.npc-badge[data-npc-id="jun"] {
+  background: #c9e9d1;
+}
+
+.npc-badge[data-npc-id="pia"] {
+  background: #f6ddb1;
+}
+
+.day-summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.day-summary-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.day-summary-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #8a776c;
 }
 
 .day-summary-text {
   font-size: 14px;
   line-height: 1.6;
   color: var(--ui-ink);
+}
+
+.day-summary-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.day-summary-highlight-card {
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 12px 24px rgba(107, 95, 90, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.day-summary-highlight-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.day-summary-highlight-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.day-summary-highlight-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.day-summary-highlight-role {
+  font-size: 12px;
+  color: var(--ui-ink-muted);
+}
+
+.role-icon {
+  width: 26px;
+  height: 26px;
+  color: #d26f52;
+}
+
+.day-summary-highlight-text {
+  font-size: 13px;
+  color: var(--ui-ink);
+  line-height: 1.5;
+}
+
+.day-summary-highlight-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.day-summary-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #efe2d3;
+  color: #5f5146;
+  text-transform: capitalize;
+}
+
+.day-summary-tag[data-tag-group="project"] {
+  background: var(--tag-project);
+}
+
+.day-summary-tag[data-tag-group="place"] {
+  background: var(--tag-place);
+}
+
+.day-summary-tag[data-tag-group="activity"] {
+  background: var(--tag-activity);
+}
+
+.day-summary-tag[data-tag-group="plant"] {
+  background: var(--tag-plant);
+}
+
+.day-summary-tag[data-tag-group="material"] {
+  background: var(--tag-material);
+}
+
+.day-summary-tag[data-tag-group="tool"] {
+  background: var(--tag-tool);
+}
+
+.day-summary-tag[data-tag-group="item"] {
+  background: var(--tag-item);
+}
+
+.day-summary-insights {
+  display: grid;
+  gap: 8px;
+}
+
+.day-summary-insight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(220, 205, 190, 0.6);
+  font-size: 13px;
+  color: var(--ui-ink);
+}
+
+.insight-icon {
+  width: 20px;
+  height: 20px;
+  color: #c57a5a;
+}
+
+.day-summary-insight[data-category="goal"] .insight-icon {
+  color: #c56e5a;
+}
+
+.day-summary-insight[data-category="value"] .insight-icon {
+  color: #b35f7a;
+}
+
+.day-summary-insight[data-category="habit"] .insight-icon {
+  color: #8a7bb3;
+}
+
+.day-summary-insight[data-category="interest"] .insight-icon {
+  color: #6b9bbf;
+}
+
+.day-summary-insight[data-category="style"] .insight-icon {
+  color: #7fa870;
+}
+
+.day-summary-empty {
+  font-size: 13px;
+  color: var(--ui-ink-muted);
 }
 
 .day-summary-loading {
@@ -324,6 +572,11 @@ body {
   color: var(--ui-error);
 }
 
+.day-summary-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .day-summary-action {
   border: none;
   border-radius: 12px;
@@ -333,12 +586,128 @@ body {
   background: var(--ui-accent);
   color: var(--ui-ink);
   cursor: pointer;
-  align-self: flex-end;
 }
 
 .day-summary-action:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.day-kickoff-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(240, 230, 218, 0.7), rgba(230, 214, 196, 0.9));
+  padding: 24px;
+  z-index: 6;
+  animation: overlay-fade-in 220ms ease-out;
+}
+
+.day-kickoff-panel {
+  width: min(640px, 92vw);
+  background: linear-gradient(150deg, rgba(255, 249, 240, 0.98), rgba(245, 230, 212, 0.92));
+  border-radius: 24px;
+  padding: 22px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 26px 52px rgba(107, 95, 90, 0.18);
+  border: 1px solid rgba(210, 191, 170, 0.5);
+  animation: panel-rise-in 260ms ease-out;
+}
+
+.day-kickoff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.day-kickoff-kicker {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ui-ink-muted);
+}
+
+.day-kickoff-title {
+  font-size: 24px;
+  font-weight: 700;
+  font-family: "Fraunces", "Nunito", serif;
+  color: #5c4a3f;
+}
+
+.day-kickoff-subtitle {
+  font-size: 13px;
+  color: var(--ui-ink-muted);
+}
+
+.day-kickoff-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  display: grid;
+  place-items: center;
+  color: #d26f52;
+  box-shadow: inset 0 0 0 1px rgba(210, 191, 170, 0.5);
+}
+
+.spark-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.day-kickoff-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.day-kickoff-card {
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 0 12px 24px rgba(107, 95, 90, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.day-kickoff-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #5f5146;
+}
+
+.day-kickoff-card-detail {
+  font-size: 13px;
+  color: var(--ui-ink);
+  line-height: 1.5;
+}
+
+.day-kickoff-loading,
+.day-kickoff-empty {
+  font-size: 13px;
+  color: var(--ui-ink-muted);
+}
+
+.day-kickoff-error {
+  font-size: 12px;
+  color: var(--ui-error);
+}
+
+.day-kickoff-action {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--ui-accent);
+  color: var(--ui-ink);
+  cursor: pointer;
+  align-self: flex-end;
 }
 
 .dev-panel-root {
