@@ -1,6 +1,7 @@
 import debug from "debug";
 import { z } from "zod";
 import { getActiveDayIndex } from "../logs/conversation-log";
+import { getNpcRoster } from "../npc-roster";
 import { getMemoryFacts, initializeMemoryStore, replaceAllMemoryFacts } from "./memory-store";
 import type { ConversationEntry } from "../logs/conversation-log";
 import type { MemoryExtractionResult, MemoryFact, MemoryFactType } from "./memory-types";
@@ -9,6 +10,11 @@ const log = debug("ralph:memory-pipeline");
 
 const MIN_SALIENCE = 0.4;
 const MAX_FACTS_PER_ENTRY = 4;
+
+type LexiconEntry = {
+  value: string;
+  aliases: string[];
+};
 
 const memoryFactSchema = z.object({
   id: z.string().min(1),
@@ -25,6 +31,7 @@ const memoryFactSchema = z.object({
   content: z.string().min(1),
   tags: z.array(z.string()),
   salience: z.number().min(0).max(1),
+  mentions: z.number().int().min(1).optional().default(1),
   createdAt: z.string().min(1),
   lastMentionedAt: z.string().min(1),
 });
@@ -76,6 +83,66 @@ const scheduleKeywords = [
 const itemVerbs = ["bought", "picked up", "got", "need", "looking for", "found"];
 const eventVerbs = ["went", "visited", "met", "finished", "started", "helped", "built"];
 
+const placeLexicon: LexiconEntry[] = [
+  { value: "community hall", aliases: ["community hall", "hall"] },
+  { value: "craft shop", aliases: ["craft shop", "workshop"] },
+  { value: "grove", aliases: ["grove", "garden", "garden grove"] },
+  { value: "market corner", aliases: ["market corner", "market"] },
+  { value: "notice board", aliases: ["notice board", "bulletin board"] },
+];
+
+const projectLexicon: LexiconEntry[] = [
+  { value: "bridge", aliases: ["bridge", "bridge repair"] },
+  { value: "house", aliases: ["house", "home", "cabin"] },
+  { value: "garden", aliases: ["garden", "kitchen garden", "herb garden"] },
+  { value: "blueprint", aliases: ["blueprint", "plan", "layout"] },
+];
+
+const activityLexicon: LexiconEntry[] = [
+  { value: "build", aliases: ["build", "building", "construct"] },
+  { value: "repair", aliases: ["repair", "fix", "mend"] },
+  { value: "plan", aliases: ["plan", "planning", "sketch", "design"] },
+  { value: "plant", aliases: ["plant", "planting", "garden", "grow"] },
+  { value: "shop", aliases: ["shop", "shopping", "trade", "buy"] },
+  { value: "organize", aliases: ["organize", "organizing", "arrange"] },
+];
+
+const materialLexicon: LexiconEntry[] = [
+  { value: "wood", aliases: ["wood", "timber"] },
+  { value: "cedar", aliases: ["cedar"] },
+  { value: "pine", aliases: ["pine"] },
+  { value: "stone", aliases: ["stone", "rock"] },
+  { value: "rope", aliases: ["rope", "twine"] },
+  { value: "nails", aliases: ["nail", "nails"] },
+  { value: "planks", aliases: ["plank", "planks"] },
+];
+
+const toolLexicon: LexiconEntry[] = [
+  { value: "hammer", aliases: ["hammer", "mallet"] },
+  { value: "saw", aliases: ["saw"] },
+  { value: "shovel", aliases: ["shovel", "spade"] },
+  { value: "trowel", aliases: ["trowel"] },
+  { value: "watering can", aliases: ["watering can", "water can"] },
+];
+
+const plantLexicon: LexiconEntry[] = [
+  { value: "basil", aliases: ["basil", "thai basil"] },
+  { value: "lemongrass", aliases: ["lemongrass"] },
+  { value: "kaffir lime", aliases: ["kaffir lime", "lime"] },
+  { value: "cilantro", aliases: ["cilantro", "coriander"] },
+];
+
+const productLexicon: LexiconEntry[] = [
+  { value: "compost tea", aliases: ["compost tea", "compost-tea"] },
+  { value: "blueprint", aliases: ["blueprint"] },
+  { value: "checklist", aliases: ["checklist", "list"] },
+];
+
+const personLexicon: LexiconEntry[] = getNpcRoster().map((npc) => ({
+  value: npc.name.toLowerCase(),
+  aliases: [npc.name.toLowerCase(), npc.id.toLowerCase(), npc.role.toLowerCase()],
+}));
+
 export async function extractAndStoreMemories(
   npcId: string,
   entries: ConversationEntry[]
@@ -123,7 +190,13 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
         npcId,
         type: "emotion",
         content: `Player feels ${emotion}.`,
-        tags: [`emotion:${emotion}`, `day:${dayIndex}`],
+        tags: buildTags({
+          type: "emotion",
+          rawText,
+          npcId,
+          dayIndex,
+          detailTags: [createTag("emotion", emotion)],
+        }),
         sourceText: rawText,
         timestamp,
       })
@@ -137,7 +210,13 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
         npcId,
         type: "preference",
         content: `Player ${preferenceMatch.verb}s ${preferenceMatch.object}.`,
-        tags: [`preference:${preferenceMatch.object}`, `day:${dayIndex}`],
+        tags: buildTags({
+          type: "preference",
+          rawText,
+          npcId,
+          dayIndex,
+          detailTags: [createTag("preference", preferenceMatch.object)],
+        }),
         sourceText: rawText,
         timestamp,
       })
@@ -151,7 +230,13 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
         npcId,
         type: "goal",
         content: `Player ${goalMatch.phrase} ${goalMatch.tail}.`,
-        tags: [`goal:${goalMatch.tail}`, `day:${dayIndex}`],
+        tags: buildTags({
+          type: "goal",
+          rawText,
+          npcId,
+          dayIndex,
+          detailTags: [createTag("goal", goalMatch.tail)],
+        }),
         sourceText: rawText,
         timestamp,
       })
@@ -166,7 +251,13 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
           npcId,
           type: "relationship",
           content: `Player mentioned their ${relation}.`,
-          tags: [`relationship:${relation}`, `day:${dayIndex}`],
+          tags: buildTags({
+            type: "relationship",
+            rawText,
+            npcId,
+            dayIndex,
+            detailTags: [createTag("relationship", relation)],
+          }),
           sourceText: rawText,
           timestamp,
         })
@@ -182,7 +273,13 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
           npcId,
           type: "schedule",
           content: `Player mentioned ${schedule}.`,
-          tags: [`schedule:${schedule}`, `day:${dayIndex}`],
+          tags: buildTags({
+            type: "schedule",
+            rawText,
+            npcId,
+            dayIndex,
+            detailTags: [createTag("schedule", schedule)],
+          }),
           sourceText: rawText,
           timestamp,
         })
@@ -197,7 +294,13 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
         npcId,
         type: "item",
         content: `Player ${itemMatch.verb} ${itemMatch.object}.`,
-        tags: [`item:${itemMatch.object}`, `day:${dayIndex}`],
+        tags: buildTags({
+          type: "item",
+          rawText,
+          npcId,
+          dayIndex,
+          detailTags: [createTag("item", itemMatch.object)],
+        }),
         sourceText: rawText,
         timestamp,
       })
@@ -211,7 +314,13 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
         npcId,
         type: "event",
         content: `Player ${eventMatch.verb} ${eventMatch.object}.`,
-        tags: [`event:${eventMatch.object}`, `day:${dayIndex}`],
+        tags: buildTags({
+          type: "event",
+          rawText,
+          npcId,
+          dayIndex,
+          detailTags: [createTag("event", eventMatch.object)],
+        }),
         sourceText: rawText,
         timestamp,
       })
@@ -224,7 +333,13 @@ function extractFactsFromEntry(entry: ConversationEntry, npcId: string, dayIndex
         npcId,
         type: "event",
         content: rawText,
-        tags: [`day:${dayIndex}`, "event:general"],
+        tags: buildTags({
+          type: "event",
+          rawText,
+          npcId,
+          dayIndex,
+          detailTags: [createTag("event", "general")],
+        }),
         sourceText: rawText,
         timestamp,
       })
@@ -264,14 +379,19 @@ function mergeMemoryFacts(existingFacts: MemoryFact[], incomingFacts: MemoryFact
       return;
     }
 
+    const existingMentions = existing.mentions ?? 1;
+    const incomingMentions = fact.mentions ?? 1;
+    const combinedMentions = existingMentions + incomingMentions;
+    const mentionBoost = Math.min(0.12, Math.log2(combinedMentions + 1) * 0.04);
     const combinedSalience = clamp(
-      existing.salience * 0.7 + fact.salience * 0.3 + 0.05,
+      existing.salience * 0.65 + fact.salience * 0.35 + 0.04 + mentionBoost,
       0,
       1
     );
     merged.set(key, {
       ...existing,
       salience: Math.max(existing.salience, combinedSalience),
+      mentions: combinedMentions,
       lastMentionedAt: fact.lastMentionedAt,
       tags: mergeTags(existing.tags, fact.tags),
     });
@@ -303,6 +423,7 @@ function createMemoryFact(input: {
     content: input.content,
     tags: input.tags,
     salience,
+    mentions: 1,
     createdAt: input.timestamp,
     lastMentionedAt: input.timestamp,
   };
@@ -367,6 +488,61 @@ function createMergeKey(fact: MemoryFact) {
 
 function mergeTags(existing: string[], incoming: string[]) {
   return Array.from(new Set([...existing, ...incoming]));
+}
+
+function buildTags(input: {
+  type: MemoryFactType;
+  rawText: string;
+  npcId: string;
+  dayIndex: number;
+  detailTags?: string[];
+}) {
+  const tags = new Set<string>();
+  tags.add(createTag("type", input.type));
+  tags.add(createTag("day", String(input.dayIndex)));
+  tags.add(createTag("npc", input.npcId));
+  extractSemanticTags(input.rawText).forEach((tag) => tags.add(tag));
+  input.detailTags?.forEach((tag) => tags.add(tag));
+  return Array.from(tags);
+}
+
+function extractSemanticTags(text: string) {
+  const lowered = text.toLowerCase();
+  const tags = [
+    ...collectLexiconTags(lowered, placeLexicon, "place"),
+    ...collectLexiconTags(lowered, personLexicon, "person"),
+    ...collectLexiconTags(lowered, projectLexicon, "project"),
+    ...collectLexiconTags(lowered, activityLexicon, "activity"),
+    ...collectLexiconTags(lowered, materialLexicon, "material"),
+    ...collectLexiconTags(lowered, toolLexicon, "tool"),
+    ...collectLexiconTags(lowered, plantLexicon, "plant"),
+    ...collectLexiconTags(lowered, productLexicon, "product"),
+  ];
+  return Array.from(new Set(tags));
+}
+
+function collectLexiconTags(text: string, lexicon: LexiconEntry[], group: string) {
+  const matches: string[] = [];
+  lexicon.forEach((entry) => {
+    const hasMatch = entry.aliases.some((alias) => text.includes(alias));
+    if (hasMatch) {
+      matches.push(createTag(group, entry.value));
+    }
+  });
+  return matches;
+}
+
+function createTag(group: string, value: string) {
+  return `${group}:${normalizeTagValue(value)}`;
+}
+
+function normalizeTagValue(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim();
 }
 
 function normalizeText(text: string) {

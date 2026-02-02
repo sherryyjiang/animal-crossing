@@ -23,11 +23,11 @@ export async function initializeMemoryStore() {
 }
 
 export function getMemoryFacts() {
-  return [...memoryFacts];
+  return memoryFacts.map((fact) => normalizeMemoryFact(fact));
 }
 
 export function getMemoryFactsForNpc(npcId: string) {
-  return memoryFacts.filter((fact) => fact.npcId === npcId);
+  return memoryFacts.filter((fact) => fact.npcId === npcId).map((fact) => normalizeMemoryFact(fact));
 }
 
 export function appendMemoryFacts(facts: MemoryFact[]) {
@@ -39,7 +39,7 @@ export function appendMemoryFacts(facts: MemoryFact[]) {
 
 export async function replaceAllMemoryFacts(facts: MemoryFact[]) {
   memoryFacts.length = 0;
-  memoryFacts.push(...facts);
+  memoryFacts.push(...facts.map((fact) => normalizeMemoryFact(fact)));
   await replaceMemoryFacts(facts);
 }
 
@@ -52,11 +52,19 @@ async function hydrateMemoryFacts() {
   try {
     const storedFacts = await loadMemoryFacts();
     memoryFacts.length = 0;
-    memoryFacts.push(...storedFacts);
+    memoryFacts.push(...storedFacts.map((fact) => normalizeMemoryFact(fact)));
     log("memory store hydrated with %d facts", storedFacts.length);
   } catch (error) {
     log("failed to hydrate memory facts %o", error);
   } finally {
     isInitialized = true;
   }
+}
+
+function normalizeMemoryFact(fact: MemoryFact) {
+  const mentions = (fact as MemoryFact & { mentions?: number }).mentions ?? 1;
+  return {
+    ...fact,
+    mentions,
+  };
 }

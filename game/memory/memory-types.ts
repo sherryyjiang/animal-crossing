@@ -14,6 +14,7 @@ export interface MemoryFact {
   content: string;
   tags: string[];
   salience: number;
+  mentions: number;
   createdAt: string;
   lastMentionedAt: string;
 }

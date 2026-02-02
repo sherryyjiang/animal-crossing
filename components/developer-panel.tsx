@@ -241,14 +241,19 @@ export function DeveloperPanel(): JSX.Element | null {
                         <div className="dev-panel-item-meta">
                           <span>{npc?.name ?? fact.npcId}</span>
                           <span>{fact.type}</span>
-                          <span>Salience {fact.salience}</span>
+                          <span>Strength {fact.salience.toFixed(2)}</span>
+                          <span>Mentions {fact.mentions}</span>
                           <span>{formatTimestamp(fact.createdAt)}</span>
                         </div>
                         <div className="dev-panel-item-text">{fact.content}</div>
                         {fact.tags.length > 0 ? (
                           <div className="dev-panel-tags">
                             {fact.tags.map((tag) => (
-                              <span key={tag} className="dev-panel-tag">
+                              <span
+                                key={tag}
+                                className="dev-panel-tag"
+                                data-tag-group={getTagGroup(tag)}
+                              >
                                 {tag}
                               </span>
                             ))}
@@ -331,6 +336,11 @@ function formatTimestamp(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function getTagGroup(tag: string) {
+  const [group] = tag.split(":");
+  return group || "misc";
 }
 
 interface DeveloperPanelSectionProps {

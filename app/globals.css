@@ -18,6 +18,24 @@ body {
   --ui-blue-soft: #d4e4f6;
   --ui-blue-strong: #aac4ea;
   --ui-error: #b05b4a;
+  --tag-type: #efe2d3;
+  --tag-day: #e8dde2;
+  --tag-npc: #ddd9f2;
+  --tag-person: #e6d4f0;
+  --tag-place: #d8eadf;
+  --tag-project: #f6d6b4;
+  --tag-activity: #d7e7f7;
+  --tag-material: #eadcc8;
+  --tag-tool: #dfe3e9;
+  --tag-plant: #d5f0d6;
+  --tag-product: #f4e8b6;
+  --tag-goal: #f6e3c0;
+  --tag-preference: #f2d6e6;
+  --tag-emotion: #f1cbd1;
+  --tag-relationship: #e7dff5;
+  --tag-schedule: #d5e1f2;
+  --tag-item: #e8e2d8;
+  --tag-event: #f0e3cf;
 }
 
 body {
@@ -522,6 +540,75 @@ body {
   border-radius: 999px;
   padding: 2px 8px;
   font-size: 11px;
+}
+
+.dev-panel-tag[data-tag-group="type"] {
+  background: var(--tag-type);
+}
+
+.dev-panel-tag[data-tag-group="day"] {
+  background: var(--tag-day);
+}
+
+.dev-panel-tag[data-tag-group="npc"],
+.dev-panel-tag[data-tag-group="person"] {
+  background: var(--tag-person);
+}
+
+.dev-panel-tag[data-tag-group="place"] {
+  background: var(--tag-place);
+}
+
+.dev-panel-tag[data-tag-group="project"] {
+  background: var(--tag-project);
+}
+
+.dev-panel-tag[data-tag-group="activity"] {
+  background: var(--tag-activity);
+}
+
+.dev-panel-tag[data-tag-group="material"] {
+  background: var(--tag-material);
+}
+
+.dev-panel-tag[data-tag-group="tool"] {
+  background: var(--tag-tool);
+}
+
+.dev-panel-tag[data-tag-group="plant"] {
+  background: var(--tag-plant);
+}
+
+.dev-panel-tag[data-tag-group="product"] {
+  background: var(--tag-product);
+}
+
+.dev-panel-tag[data-tag-group="goal"] {
+  background: var(--tag-goal);
+}
+
+.dev-panel-tag[data-tag-group="preference"] {
+  background: var(--tag-preference);
+}
+
+.dev-panel-tag[data-tag-group="emotion"] {
+  background: var(--tag-emotion);
+}
+
+.dev-panel-tag[data-tag-group="relationship"] {
+  background: var(--tag-relationship);
+}
+
+.dev-panel-tag[data-tag-group="schedule"] {
+  background: var(--tag-schedule);
+}
+
+.dev-panel-tag[data-tag-group="item"] {
+  background: var(--tag-item);
+}
+
+.dev-panel-tag[data-tag-group="event"] {
+  background: var(--tag-event);
 }
 
 .dev-panel-empty {
