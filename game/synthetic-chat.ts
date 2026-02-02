@@ -8,6 +8,7 @@ import {
   initializeConversationLog,
   setActiveDayIndex,
 } from "./logs/conversation-log";
+import type { ConversationEntry } from "./logs/conversation-log";
 import { getNpcRoster } from "./npc-roster";
 
 const log = debug("ralph:synthetic-chat");
@@ -58,7 +59,7 @@ async function runSyntheticScript(
 ): Promise<SyntheticChatNpcResult> {
   const totalTurns = script.turns.length;
   const timestampFor = createTimestampSeries(totalTurns * 2);
-  const entries = [];
+  const entries: ConversationEntry[] = [];
   let timestampIndex = 0;
 
   script.turns.forEach((turn) => {

@@ -17,11 +17,14 @@ import { initializeMemoryStore } from "../game/memory/memory-store";
 import { buildNpcMemoryContext } from "../game/memory/memory-retrieval";
 import type { NpcMemoryContext } from "../game/memory/memory-retrieval";
 import type { MemoryFact } from "../game/memory/memory-types";
+import { llmAdapter } from "../game/llm/llm-adapter";
+import { buildNpcChatInput } from "../game/llm/npc-chat";
 
 export function DialogueOverlay() {
   const [activeSession, setActiveSession] = useState<DialogueSession | null>(null);
   const [inputValue, setInputValue] = useState("");
   const replyTimerRef = useRef<number | null>(null);
+  const replyTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -29,6 +32,7 @@ export function DialogueOverlay() {
     void initializeMemoryStore();
     const unsubscribe = onDialogueOpen((detail) => {
       clearReplyTimer(replyTimerRef);
+      replyTokenRef.current = null;
       void (async () => {
         const memoryContext = await buildNpcMemoryContext({
           npcId: detail.npcId,
@@ -65,7 +69,6 @@ export function DialogueOverlay() {
     const trimmedInput = inputValue.trim();
     if (!trimmedInput) return;
 
-    const npcReply = createNpcReply(activeSession, trimmedInput);
     const playerEntry = appendConversationEntry({
       npcId: activeSession.npcId,
       speaker: "player",
@@ -74,25 +77,37 @@ export function DialogueOverlay() {
     const nextSession = createPlayerLine(activeSession, trimmedInput);
     setActiveSession(nextSession);
     setInputValue("");
+
+    const replyToken = `${activeSession.npcId}-${Date.now()}`;
+    replyTokenRef.current = replyToken;
     clearReplyTimer(replyTimerRef);
-    replyTimerRef.current = window.setTimeout(() => {
-      const npcEntry = appendConversationEntry({
-        npcId: activeSession.npcId,
-        speaker: "npc",
-        text: npcReply,
-      });
-      void extractAndStoreMemories(activeSession.npcId, [playerEntry, npcEntry]);
-      void markNpcVisited(activeSession.npcId);
-      setActiveSession((current) => {
-        if (!current || current.npcId !== activeSession.npcId) return current;
-        return createNpcReplySession(current, npcReply);
-      });
-      clearReplyTimer(replyTimerRef);
-    }, DIALOGUE_PACING.npcReplyDelayMs);
+
+    void (async () => {
+      const { reply, errorMessage } = await generateNpcReply(activeSession, trimmedInput);
+      if (replyTokenRef.current !== replyToken) {
+        return;
+      }
+
+      replyTimerRef.current = window.setTimeout(() => {
+        const npcEntry = appendConversationEntry({
+          npcId: activeSession.npcId,
+          speaker: "npc",
+          text: reply,
+        });
+        void extractAndStoreMemories(activeSession.npcId, [playerEntry, npcEntry]);
+        void markNpcVisited(activeSession.npcId);
+        setActiveSession((current) => {
+          if (!current || current.npcId !== activeSession.npcId) return current;
+          return createNpcReplySession(current, reply, errorMessage);
+        });
+        clearReplyTimer(replyTimerRef);
+      }, DIALOGUE_PACING.npcReplyDelayMs);
+    })();
   }
 
   function handleContinue() {
     clearReplyTimer(replyTimerRef);
+    replyTokenRef.current = null;
     emitDialogueClose();
     setActiveSession(null);
     setInputValue("");
@@ -160,6 +175,9 @@ export function DialogueOverlay() {
             Continue
           </button>
         </div>
+        {activeSession.errorMessage ? (
+          <div className="dialogue-error">{activeSession.errorMessage}</div>
+        ) : null}
       </div>
     </div>
   );
@@ -179,6 +197,7 @@ function createDialogueSession(
     hasPlayerLine: false,
     hasNpcReply: false,
     isNpcTyping: false,
+    errorMessage: null,
     lines: [
       {
         id: createLineId(),
@@ -206,11 +225,17 @@ function createPlayerLine(session: DialogueSession, playerText: string): Dialogu
   };
 }
 
-function createNpcReplySession(session: DialogueSession, npcReply: string): DialogueSession {
+function createNpcReplySession(
+  session: DialogueSession,
+  npcReply: string,
+  errorMessage: string | null
+): DialogueSession {
   return {
     ...session,
+    hasPlayerLine: false,
     hasNpcReply: true,
     isNpcTyping: false,
+    errorMessage,
     lines: [
       ...session.lines,
       {
@@ -228,10 +253,30 @@ function createGreeting(npcName: string, memoryContext: NpcMemoryContext) {
   return `${npcName} ${memoryContext.profile.greetingStyle}${recallLine}`;
 }
 
-function createNpcReply(session: DialogueSession, playerText: string) {
+async function generateNpcReply(session: DialogueSession, playerText: string) {
+  try {
+    const chatInput = buildNpcChatInput({
+      npcId: session.npcId,
+      npcName: session.npcName,
+      npcRole: session.npcRole,
+      memoryContext: session.memoryContext,
+      conversationHistory: session.lines.map((line) => ({
+        speaker: line.speaker,
+        text: line.text,
+      })),
+      playerText,
+    });
+    const response = await llmAdapter.generateReply(chatInput);
+    return { reply: response.text, errorMessage: null };
+  } catch (error) {
+    return { reply: createFallbackReply(session, playerText), errorMessage: "LLM unavailable. Using fallback reply." };
+  }
+}
+
+function createFallbackReply(session: DialogueSession, playerText: string) {
   const recall = formatMemoryRecall(session.memoryContext.topMemories[0]);
   const recallLine = recall ? ` ${recall}` : "";
-  return `${session.npcName} ${session.memoryContext.profile.replyStyle} "${playerText}"${recallLine}`;
+  return `${session.npcName} ${session.memoryContext.profile.replyStyle} \"${playerText}\"${recallLine}`;
 }
 
 function formatMemoryRecall(fact?: MemoryFact) {
@@ -269,6 +314,7 @@ interface DialogueSession {
   hasPlayerLine: boolean;
   hasNpcReply: boolean;
   isNpcTyping: boolean;
+  errorMessage: string | null;
   lines: DialogueLine[];
 }
 

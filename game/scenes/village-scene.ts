@@ -1,9 +1,32 @@
 import debug from "debug";
 import Phaser from "phaser";
 import { emitDialogueOpen, onDialogueClose } from "../events/dialogue-events";
+import {
+  setupKeyboardControls,
+  type CursorKeysLike,
+  type MovementKeys,
+} from "../input/keyboard-controls";
+import {
+  getNpcPrompt,
+  getSceneConfig,
+  type AmbientConfig,
+  type EllipseConfig,
+  type FenceConfig,
+  type FlowerBedConfig,
+  type NpcConfig,
+  type ObstacleConfig,
+  type PondLilyConfig,
+  type PondShimmerConfig,
+  type PlazaMoteConfig,
+  type SceneConfig,
+  type TerrainConfig,
+  type TreeConfig,
+} from "./village-config";
+
+const log = debug("ralph:village");
 
 export class VillageScene extends Phaser.Scene {
-  private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
+  private cursors?: CursorKeysLike;
   private wasdKeys?: MovementKeys;
   private interactKeys: Phaser.Input.Keyboard.Key[] = [];
   private player?: Phaser.GameObjects.Rectangle;
@@ -113,13 +136,11 @@ export class VillageScene extends Phaser.Scene {
     this.npcPrompt.setDepth(5);
     this.npcPrompt.setVisible(false);
 
-    this.cursors = this.input.keyboard?.createCursorKeys();
     if (this.input.keyboard) {
-      this.wasdKeys = createWASDKeys(this.input.keyboard);
-      this.interactKeys = [
-        this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
-        this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
-      ];
+      const controls = setupKeyboardControls(this.input.keyboard);
+      this.cursors = controls.cursors;
+      this.wasdKeys = controls.wasdKeys;
+      this.interactKeys = controls.interactKeys;
     }
 
     this.cameras.main.startFollow(player, true, config.cameraLerp, config.cameraLerp);
@@ -246,17 +267,6 @@ export class VillageScene extends Phaser.Scene {
   }
 }
 
-function createWASDKeys(input: Phaser.Input.Keyboard.KeyboardPlugin): MovementKeys {
-  const keys = input.addKeys("W,A,S,D") as Record<string, Phaser.Input.Keyboard.Key>;
-
-  return {
-    up: keys.W,
-    left: keys.A,
-    down: keys.S,
-    right: keys.D,
-  };
-}
-
 function createStaticObstacle(
   scene: Phaser.Scene,
   obstacle: ObstacleConfig
@@ -268,7 +278,74 @@ function createStaticObstacle(
     obstacle.height,
     obstacle.color
   );
+  rectangle.setDepth(1);
   scene.physics.add.existing(rectangle, true);
+
+  const roofHeight = obstacle.height * 0.55;
+  const roofWidth = obstacle.width * 1.1;
+  const roofColor = adjustColor(obstacle.color, -40);
+  const roof = scene.add.graphics();
+  roof.fillStyle(roofColor, 1);
+  roof.fillTriangle(
+    obstacle.x - roofWidth / 2,
+    obstacle.y - obstacle.height / 2,
+    obstacle.x + roofWidth / 2,
+    obstacle.y - obstacle.height / 2,
+    obstacle.x,
+    obstacle.y - obstacle.height / 2 - roofHeight
+  );
+  roof.setDepth(2);
+
+  const trim = scene.add.rectangle(
+    obstacle.x,
+    obstacle.y - obstacle.height / 2 + 6,
+    obstacle.width * 1.02,
+    8,
+    adjustColor(obstacle.color, 18)
+  );
+  trim.setDepth(2);
+
+  const doorWidth = obstacle.width * 0.22;
+  const doorHeight = obstacle.height * 0.36;
+  const door = scene.add.rectangle(
+    obstacle.x,
+    obstacle.y + obstacle.height * 0.2,
+    doorWidth,
+    doorHeight,
+    adjustColor(obstacle.color, -70)
+  );
+  door.setDepth(2);
+
+  const knob = scene.add.circle(
+    obstacle.x + doorWidth * 0.22,
+    obstacle.y + obstacle.height * 0.2,
+    2.6,
+    adjustColor(obstacle.color, 40)
+  );
+  knob.setDepth(3);
+
+  const windowWidth = Math.min(obstacle.width * 0.18, 34);
+  const windowHeight = Math.min(obstacle.height * 0.22, 26);
+  const windowY = obstacle.y - obstacle.height * 0.05;
+  const windowOffsetX = obstacle.width * 0.25;
+  const windowColor = adjustColor(obstacle.color, 55);
+
+  const leftWindow = scene.add.rectangle(
+    obstacle.x - windowOffsetX,
+    windowY,
+    windowWidth,
+    windowHeight,
+    windowColor
+  );
+  leftWindow.setDepth(2);
+  const rightWindow = scene.add.rectangle(
+    obstacle.x + windowOffsetX,
+    windowY,
+    windowWidth,
+    windowHeight,
+    windowColor
+  );
+  rightWindow.setDepth(2);
 
   if (obstacle.label) {
     scene.add.text(obstacle.x, obstacle.y - obstacle.height / 2 - 8, obstacle.label, {
@@ -346,6 +423,19 @@ function createTree(
   colors: SceneConfig["colors"],
   ambient: AmbientConfig
 ) {
+  const canopyShadow = adjustColor(colors.treeCanopy, -22);
+  const canopyMid = adjustColor(colors.treeCanopy, 12);
+
+  const baseShadow = scene.add.ellipse(
+    tree.x,
+    tree.y + tree.trunkHeight * 0.75,
+    tree.canopyWidth * 0.85,
+    tree.canopyHeight * 0.35,
+    adjustColor(colors.treeTrunk, -30)
+  );
+  baseShadow.setDepth(0.9);
+  baseShadow.setAlpha(0.35);
+
   const trunk = scene.add.rectangle(
     tree.x,
     tree.y + tree.trunkHeight / 2,
@@ -354,6 +444,25 @@ function createTree(
     colors.treeTrunk
   );
   trunk.setDepth(1);
+
+  const trunkHighlight = scene.add.rectangle(
+    tree.x + tree.trunkWidth * 0.15,
+    tree.y + tree.trunkHeight / 2,
+    tree.trunkWidth * 0.35,
+    tree.trunkHeight * 0.7,
+    adjustColor(colors.treeTrunk, 24)
+  );
+  trunkHighlight.setDepth(2);
+  trunkHighlight.setAlpha(0.8);
+
+  const canopyBack = scene.add.ellipse(
+    tree.x,
+    tree.y - tree.canopyOffset * 1.05,
+    tree.canopyWidth * 1.08,
+    tree.canopyHeight * 0.92,
+    canopyShadow
+  );
+  canopyBack.setDepth(1);
 
   const canopy = scene.add.ellipse(
     tree.x,
@@ -364,6 +473,15 @@ function createTree(
   );
   canopy.setDepth(1);
 
+  const canopyLower = scene.add.ellipse(
+    tree.x,
+    tree.y - tree.canopyOffset * 0.45,
+    tree.canopyWidth * 0.9,
+    tree.canopyHeight * 0.6,
+    canopyMid
+  );
+  canopyLower.setDepth(1);
+
   const highlight = scene.add.ellipse(
     tree.x - tree.canopyWidth * 0.12,
     tree.y - tree.canopyOffset - tree.canopyHeight * 0.08,
@@ -373,9 +491,19 @@ function createTree(
   );
   highlight.setDepth(2);
 
+  const highlightTwo = scene.add.ellipse(
+    tree.x + tree.canopyWidth * 0.18,
+    tree.y - tree.canopyOffset * 0.7,
+    tree.canopyWidth * 0.24,
+    tree.canopyHeight * 0.22,
+    colors.treeHighlight
+  );
+  highlightTwo.setDepth(2);
+  highlightTwo.setAlpha(0.85);
+
   scene.tweens.add({
-    targets: [canopy, highlight],
-    y: canopy.y - ambient.treeSway.offset,
+    targets: [canopyBack, canopy, canopyLower, highlight, highlightTwo],
+    y: `-=${ambient.treeSway.offset}`,
     duration: ambient.treeSway.duration,
     yoyo: true,
     repeat: -1,
@@ -629,344 +757,10 @@ function createNpcSign(scene: Phaser.Scene, npc: NpcConfig, colors: SceneConfig[
   label.setDepth(4);
 }
 
-function getSceneConfig(): SceneConfig {
-  return SCENE_CONFIG;
-}
-
-function getNpcPrompt(npc: NpcConfig) {
-  return `Press E or Space to talk to ${npc.name}`;
-}
-
-const log = debug("ralph:village");
-
-const SCENE_CONFIG = {
-  mapWidth: 1600,
-  mapHeight: 1000,
-  cameraLerp: 0.12,
-  playerSpeed: 220,
-  playerSize: { width: 28, height: 36 },
-  playerStart: { x: 240, y: 520 },
-  colors: {
-    background: 0xf6efe7,
-    grass: 0xe1f0e9,
-    plaza: 0xfce8d4,
-    player: 0x9cc6f3,
-    path: 0xf5d6c4,
-    sand: 0xf8e9d8,
-    water: 0xb9dbf3,
-    waterEdge: 0x8dbcd8,
-    treeCanopy: 0xc8e6c9,
-    treeHighlight: 0xe3f3e1,
-    treeTrunk: 0xcaa58c,
-    flowerPink: 0xf6b6c8,
-    flowerYellow: 0xf8e2a0,
-    flowerLavender: 0xd6c2f2,
-    fence: 0xd7c2aa,
-    fenceRail: 0xe6d7c3,
-    npcShadow: 0x7a6f66,
-    signBoard: 0xfaf3e8,
-    signPost: 0xd9c3af,
-    plazaMote: 0xfef6ea,
-    waterLily: 0xd7f0f5,
-  },
-  terrain: {
-    meadow: { x: 80, y: 240, width: 1440, height: 680, radius: 180 },
-    plaza: { x: 360, y: 140, width: 880, height: 380, radius: 160 },
-    paths: [
-      { x: 520, y: 420, width: 140, height: 460, radius: 48 },
-      { x: 520, y: 420, width: 520, height: 120, radius: 48 },
-      { x: 820, y: 240, width: 120, height: 260, radius: 40 },
-    ],
-    sandyPatches: [
-      { x: 180, y: 720, width: 220, height: 140, radius: 40 },
-      { x: 1160, y: 560, width: 200, height: 120, radius: 36 },
-    ],
-    ponds: [
-      { x: 1180, y: 280, width: 240, height: 150 },
-      { x: 260, y: 360, width: 190, height: 120 },
-    ],
-    flowerBeds: [
-      { x: 460, y: 280, width: 120, height: 90, spacing: 26, flowerRadius: 6 },
-      { x: 660, y: 300, width: 130, height: 90, spacing: 26, flowerRadius: 6 },
-      { x: 980, y: 640, width: 160, height: 90, spacing: 28, flowerRadius: 6 },
-    ],
-    trees: [
-      { x: 150, y: 260, canopyWidth: 80, canopyHeight: 70, canopyOffset: 30, trunkWidth: 16, trunkHeight: 28 },
-      { x: 220, y: 520, canopyWidth: 90, canopyHeight: 76, canopyOffset: 32, trunkWidth: 16, trunkHeight: 28 },
-      { x: 320, y: 760, canopyWidth: 88, canopyHeight: 74, canopyOffset: 32, trunkWidth: 16, trunkHeight: 30 },
-      { x: 860, y: 160, canopyWidth: 92, canopyHeight: 80, canopyOffset: 34, trunkWidth: 16, trunkHeight: 30 },
-      { x: 1280, y: 380, canopyWidth: 86, canopyHeight: 72, canopyOffset: 30, trunkWidth: 16, trunkHeight: 28 },
-      { x: 1360, y: 660, canopyWidth: 92, canopyHeight: 78, canopyOffset: 32, trunkWidth: 16, trunkHeight: 30 },
-    ],
-    fences: [
-      { x: 520, y: 700, length: 260, gap: 28, postWidth: 10, postHeight: 20, direction: "horizontal" },
-      { x: 920, y: 700, length: 220, gap: 28, postWidth: 10, postHeight: 20, direction: "horizontal" },
-      { x: 1080, y: 760, length: 140, gap: 26, postWidth: 10, postHeight: 20, direction: "vertical" },
-    ],
-  },
-  obstacles: [
-    { x: 420, y: 300, width: 220, height: 140, color: 0xf4d6c4, label: "Community Hall" },
-    { x: 1150, y: 720, width: 260, height: 160, color: 0xf6d6e8, label: "Craft Shop" },
-    { x: 950, y: 320, width: 140, height: 100, color: 0xd9f0e5, label: "Grove" },
-    { x: 720, y: 820, width: 180, height: 120, color: 0xf6e4b8, label: "Market" },
-  ],
-  interactionTarget: {
-    x: 640,
-    y: 520,
-    size: { width: 32, height: 24 },
-    range: { width: 110, height: 90 },
-    color: 0xf7b6c2,
-    label: "Notice Board",
-    prompt: "Press E or Space to read",
-    dialoguePrompt: "Share a quick note about your day.",
-  },
-  npcs: [
-    {
-      id: "mira",
-      name: "Mira",
-      role: "Hall Host",
-      x: 360,
-      y: 430,
-      colors: { body: 0xf6c0d6, accent: 0xfbe2ec, face: 0x5f5a54 },
-      size: { width: 42, height: 52 },
-      collider: { width: 34, height: 36 },
-      sign: { label: "Community Hall", offsetX: -80, offsetY: -10 },
-      idle: { bob: 6, duration: 1800, delay: 150 },
-    },
-    {
-      id: "theo",
-      name: "Theo",
-      role: "Carpenter",
-      x: 1180,
-      y: 680,
-      colors: { body: 0xbfe4f4, accent: 0xdff1fb, face: 0x55646b },
-      size: { width: 44, height: 54 },
-      collider: { width: 36, height: 38 },
-      sign: { label: "Craft Shop", offsetX: 90, offsetY: -20 },
-      idle: { bob: 7, duration: 1700, delay: 300 },
-    },
-    {
-      id: "jun",
-      name: "Jun",
-      role: "Garden Keeper",
-      x: 930,
-      y: 300,
-      colors: { body: 0xc9e9d1, accent: 0xe3f4e8, face: 0x55624f },
-      size: { width: 40, height: 50 },
-      collider: { width: 32, height: 34 },
-      sign: { label: "Grove", offsetX: 70, offsetY: -20 },
-      idle: { bob: 5, duration: 1900, delay: 90 },
-    },
-    {
-      id: "pia",
-      name: "Pia",
-      role: "Market Scout",
-      x: 700,
-      y: 820,
-      colors: { body: 0xf6ddb1, accent: 0xfdeccc, face: 0x6a5c4f },
-      size: { width: 46, height: 56 },
-      collider: { width: 38, height: 40 },
-      sign: { label: "Market Corner", offsetX: -90, offsetY: -20 },
-      idle: { bob: 6, duration: 1750, delay: 220 },
-    },
-  ],
-  ambient: {
-    treeSway: { offset: 2, duration: 2800, delay: 200, variance: 500 },
-    pondShimmers: [
-      { offsetX: -0.18, offsetY: -0.12, widthScale: 0.22, heightScale: 0.16, alpha: 0.22, duration: 2200, delay: 0 },
-      { offsetX: 0.16, offsetY: 0.1, widthScale: 0.18, heightScale: 0.14, alpha: 0.18, duration: 2400, delay: 600 },
-    ],
-    pondLilies: [
-      { offsetX: -0.05, offsetY: 0.12, widthScale: 0.12, heightScale: 0.08, alpha: 0.5, duration: 3000, delay: 300, drift: 4 },
-      { offsetX: 0.2, offsetY: -0.05, widthScale: 0.1, heightScale: 0.07, alpha: 0.45, duration: 3200, delay: 900, drift: 5 },
-    ],
-    plazaMotes: [
-      { xPercent: 0.25, yPercent: 0.3, radius: 3, alpha: 0.6, drift: 8, duration: 3200, delay: 200 },
-      { xPercent: 0.6, yPercent: 0.25, radius: 2.5, alpha: 0.55, drift: 6, duration: 2800, delay: 500 },
-      { xPercent: 0.42, yPercent: 0.45, radius: 3, alpha: 0.5, drift: 7, duration: 3000, delay: 700 },
-      { xPercent: 0.72, yPercent: 0.5, radius: 2, alpha: 0.45, drift: 6, duration: 2600, delay: 400 },
-      { xPercent: 0.35, yPercent: 0.62, radius: 2.5, alpha: 0.5, drift: 7, duration: 3100, delay: 900 },
-    ],
-  },
-} satisfies SceneConfig;
-
-interface MovementKeys {
-  up: Phaser.Input.Keyboard.Key;
-  left: Phaser.Input.Keyboard.Key;
-  down: Phaser.Input.Keyboard.Key;
-  right: Phaser.Input.Keyboard.Key;
-}
-
-interface SceneConfig {
-  mapWidth: number;
-  mapHeight: number;
-  cameraLerp: number;
-  playerSpeed: number;
-  playerSize: { width: number; height: number };
-  playerStart: { x: number; y: number };
-  colors: {
-    background: number;
-    grass: number;
-    plaza: number;
-    player: number;
-    path: number;
-    sand: number;
-    water: number;
-    waterEdge: number;
-    treeCanopy: number;
-    treeHighlight: number;
-    treeTrunk: number;
-    flowerPink: number;
-    flowerYellow: number;
-    flowerLavender: number;
-    fence: number;
-    fenceRail: number;
-    npcShadow: number;
-    signBoard: number;
-    signPost: number;
-    plazaMote: number;
-    waterLily: number;
-  };
-  terrain: TerrainConfig;
-  obstacles: ObstacleConfig[];
-  interactionTarget: InteractionTargetConfig;
-  npcs: NpcConfig[];
-  ambient: AmbientConfig;
-}
-
-interface ObstacleConfig {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  color: number;
-  label?: string;
-}
-
-interface InteractionTargetConfig {
-  x: number;
-  y: number;
-  size: { width: number; height: number };
-  range: { width: number; height: number };
-  color: number;
-  label: string;
-  prompt: string;
-  dialoguePrompt: string;
-}
-
-interface NpcConfig {
-  id: string;
-  name: string;
-  role: string;
-  x: number;
-  y: number;
-  colors: {
-    body: number;
-    accent: number;
-    face: number;
-  };
-  size: { width: number; height: number };
-  collider: { width: number; height: number };
-  sign: { label: string; offsetX: number; offsetY: number };
-  idle: { bob: number; duration: number; delay: number };
-}
-
-interface TerrainConfig {
-  meadow: RoundedRectConfig;
-  plaza: RoundedRectConfig;
-  paths: RoundedRectConfig[];
-  sandyPatches: RoundedRectConfig[];
-  ponds: EllipseConfig[];
-  flowerBeds: FlowerBedConfig[];
-  trees: TreeConfig[];
-  fences: FenceConfig[];
-}
-
-interface RoundedRectConfig {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  radius: number;
-}
-
-interface EllipseConfig {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface FlowerBedConfig {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  spacing: number;
-  flowerRadius: number;
-}
-
-interface TreeConfig {
-  x: number;
-  y: number;
-  canopyWidth: number;
-  canopyHeight: number;
-  canopyOffset: number;
-  trunkWidth: number;
-  trunkHeight: number;
-}
-
-interface FenceConfig {
-  x: number;
-  y: number;
-  length: number;
-  gap: number;
-  postWidth: number;
-  postHeight: number;
-  direction: "horizontal" | "vertical";
-}
-
-interface AmbientConfig {
-  treeSway: TreeSwayConfig;
-  pondShimmers: PondShimmerConfig[];
-  pondLilies: PondLilyConfig[];
-  plazaMotes: PlazaMoteConfig[];
-}
-
-interface TreeSwayConfig {
-  offset: number;
-  duration: number;
-  delay: number;
-  variance: number;
-}
-
-interface PondShimmerConfig {
-  offsetX: number;
-  offsetY: number;
-  widthScale: number;
-  heightScale: number;
-  alpha: number;
-  duration: number;
-  delay: number;
-}
-
-interface PondLilyConfig {
-  offsetX: number;
-  offsetY: number;
-  widthScale: number;
-  heightScale: number;
-  alpha: number;
-  duration: number;
-  delay: number;
-  drift: number;
-}
-
-interface PlazaMoteConfig {
-  xPercent: number;
-  yPercent: number;
-  radius: number;
-  alpha: number;
-  drift: number;
-  duration: number;
-  delay: number;
+function adjustColor(color: number, delta: number) {
+  const rgb = Phaser.Display.Color.IntegerToColor(color);
+  const r = Phaser.Math.Clamp(rgb.red + delta, 0, 255);
+  const g = Phaser.Math.Clamp(rgb.green + delta, 0, 255);
+  const b = Phaser.Math.Clamp(rgb.blue + delta, 0, 255);
+  return Phaser.Display.Color.GetColor(r, g, b);
 }

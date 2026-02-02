@@ -1,15 +1,15 @@
 # Visual Style Guide
 
 ## Art Direction
-**Pastel vector** with rounded silhouettes and soft gradients. Props are simple, friendly shapes with minimal line detail. The overall tone is cozy, calm, and bright without harsh contrast.
+**Storybook vector** with rounded silhouettes, richer contrast, and warm neutrals. Props are still simple and friendly, but use deeper midtones and more defined highlights for readability.
 
 ## Palette
-- Cream (base): #F7F2EC
-- Blush (accent): #F6C9C9
-- Mint (accent): #CFE9E3
-- Sky (secondary): #C7DDF5
-- Lavender (secondary): #D9D2F1
-- Cocoa (text): #6B5F5A
+- Parchment (base): #F0E6DA
+- Terracotta (accent): #E29561
+- Moss (accent): #7FBF78
+- Sky (secondary): #8BBADF
+- Lavender (secondary): #BDA6E6
+- Cocoa (text): #4F443C
 
 ## Typography
 - **Primary UI**: Nunito (rounded, friendly)
@@ -23,4 +23,3 @@
 - Panels use soft corners (12-16px radius).
 - Subtle shadows for depth, no heavy outlines.
 - Buttons are pill-shaped with gentle hover lightening.
-

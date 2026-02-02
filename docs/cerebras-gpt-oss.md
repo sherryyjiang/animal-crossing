@@ -10,6 +10,11 @@
 - Auth: `Authorization: Bearer CEREBRAS_API_KEY`
 - Docs explicitly warn not to include API keys in client-side code.
 
+## Next.js Client Env Notes
+- Client bundles only expose `NEXT_PUBLIC_*` env vars; `CEREBRAS_API_KEY` is server-only.
+- For browser-only dev, set `NEXT_PUBLIC_CEREBRAS_API_KEY` so the client can read it.
+- If a proxy/route handler is added later, move back to `CEREBRAS_API_KEY`.
+
 ## Rate Limits (from docs)
 - Limits are enforced by requests and tokens; whichever hits first.
 - gpt-oss-120b example (Free tier): 60K TPM, 1M TPH, 1M TPD, 30 RPM, 900 RPH, 14.4K RPD.

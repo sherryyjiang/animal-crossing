@@ -1,4 +1,8 @@
 # Ralph config (may contain API key)
 .cursor/ralph-config.json
+.cursor/debug.log
+# Local env (secrets)
+.env.local
 node_modules/
 .next/
+.test-dist/

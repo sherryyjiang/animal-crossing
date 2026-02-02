@@ -74,12 +74,12 @@ export async function clearLlmConfigOverrides(): Promise<void> {
 
 function readEnvOverrides(): LlmConfigOverrides {
   const candidate: LlmConfigOverrides = {
-    provider: parseProvider(readEnvValue("NEXT_PUBLIC_LLM_PROVIDER")),
-    baseUrl: readEnvValue("NEXT_PUBLIC_LLM_BASE_URL"),
-    model: readEnvValue("NEXT_PUBLIC_LLM_MODEL"),
-    apiKeyEnv: readEnvValue("NEXT_PUBLIC_LLM_API_KEY_ENV"),
-    temperature: parseNumber(readEnvValue("NEXT_PUBLIC_LLM_TEMPERATURE")),
-    maxCompletionTokens: parseNumber(readEnvValue("NEXT_PUBLIC_LLM_MAX_TOKENS")),
+    provider: parseProvider(readLlmEnvValue("NEXT_PUBLIC_LLM_PROVIDER")),
+    baseUrl: readLlmEnvValue("NEXT_PUBLIC_LLM_BASE_URL"),
+    model: readLlmEnvValue("NEXT_PUBLIC_LLM_MODEL"),
+    apiKeyEnv: readLlmEnvValue("NEXT_PUBLIC_LLM_API_KEY_ENV"),
+    temperature: parseNumber(readLlmEnvValue("NEXT_PUBLIC_LLM_TEMPERATURE")),
+    maxCompletionTokens: parseNumber(readLlmEnvValue("NEXT_PUBLIC_LLM_MAX_TOKENS")),
   };
 
   const parsed = llmConfigOverridesSchema.safeParse(candidate);
@@ -93,7 +93,7 @@ function readEnvOverrides(): LlmConfigOverrides {
 
 function resolveApiKey(config: LlmConfig, overrides: LlmConfigOverrides) {
   if (overrides.apiKeyOverride) return overrides.apiKeyOverride;
-  const envValue = readEnvValue(config.apiKeyEnv);
+  const envValue = readLlmEnvValue(config.apiKeyEnv);
   if (envValue) return envValue;
   log("Missing API key (env=%s)", config.apiKeyEnv);
   throw new Error("Missing LLM API key");
@@ -127,10 +127,26 @@ function parseNumber(value?: string) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function readEnvValue(name: string) {
-  if (typeof process === "undefined") return undefined;
-  if (!process.env) return undefined;
-  const value = process.env[name];
-  if (!value) return undefined;
-  return value;
+export function readLlmEnvValue(name: string) {
+  if (!name) return undefined;
+  switch (name) {
+    case "NEXT_PUBLIC_LLM_PROVIDER":
+      return process.env.NEXT_PUBLIC_LLM_PROVIDER;
+    case "NEXT_PUBLIC_LLM_BASE_URL":
+      return process.env.NEXT_PUBLIC_LLM_BASE_URL;
+    case "NEXT_PUBLIC_LLM_MODEL":
+      return process.env.NEXT_PUBLIC_LLM_MODEL;
+    case "NEXT_PUBLIC_LLM_API_KEY_ENV":
+      return process.env.NEXT_PUBLIC_LLM_API_KEY_ENV;
+    case "NEXT_PUBLIC_LLM_TEMPERATURE":
+      return process.env.NEXT_PUBLIC_LLM_TEMPERATURE;
+    case "NEXT_PUBLIC_LLM_MAX_TOKENS":
+      return process.env.NEXT_PUBLIC_LLM_MAX_TOKENS;
+    case "NEXT_PUBLIC_CEREBRAS_API_KEY":
+      return process.env.NEXT_PUBLIC_CEREBRAS_API_KEY;
+    case "NEXT_PUBLIC_OPENAI_API_KEY":
+      return process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    default:
+      return undefined;
+  }
 }
