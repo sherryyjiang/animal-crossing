@@ -18,6 +18,10 @@ export const SCENE_CONFIG = {
     grass: 0xbfd9c6,
     plaza: 0xebbfa0,
     player: 0x6aa7e0,
+    playerHair: 0x5d3b3b,
+    playerSkin: 0xf3d2c2,
+    playerOutfit: 0xe68a7a,
+    playerOutfitAccent: 0xf4c3b5,
     path: 0xd2a47f,
     sand: 0xe6c9a9,
     water: 0x8bbadf,
@@ -92,6 +96,7 @@ export const SCENE_CONFIG = {
       id: "mira",
       name: "Mira",
       role: "Hall Host",
+      accessory: "hall",
       x: 360,
       y: 430,
       colors: { body: 0xf6c0d6, accent: 0xfbe2ec, face: 0x5f5a54 },
@@ -104,6 +109,7 @@ export const SCENE_CONFIG = {
       id: "theo",
       name: "Theo",
       role: "Carpenter",
+      accessory: "craft",
       x: 1180,
       y: 840,
       colors: { body: 0xbfe4f4, accent: 0xdff1fb, face: 0x55646b },
@@ -116,6 +122,7 @@ export const SCENE_CONFIG = {
       id: "jun",
       name: "Jun",
       role: "Garden Keeper",
+      accessory: "garden",
       x: 980,
       y: 430,
       colors: { body: 0xc9e9d1, accent: 0xe3f4e8, face: 0x55624f },
@@ -128,6 +135,7 @@ export const SCENE_CONFIG = {
       id: "pia",
       name: "Pia",
       role: "Market Scout",
+      accessory: "market",
       x: 580,
       y: 820,
       colors: { body: 0xf6ddb1, accent: 0xfdeccc, face: 0x6a5c4f },
@@ -169,6 +177,10 @@ export interface SceneConfig {
     grass: number;
     plaza: number;
     player: number;
+    playerHair: number;
+    playerSkin: number;
+    playerOutfit: number;
+    playerOutfitAccent: number;
     path: number;
     sand: number;
     water: number;
@@ -218,6 +230,7 @@ export interface NpcConfig {
   id: string;
   name: string;
   role: string;
+  accessory: "hall" | "craft" | "garden" | "market";
   x: number;
   y: number;
   colors: {

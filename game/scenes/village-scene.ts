@@ -31,6 +31,7 @@ export class VillageScene extends Phaser.Scene {
   private interactKeys: Phaser.Input.Keyboard.Key[] = [];
   private player?: Phaser.GameObjects.Rectangle;
   private playerBody?: Phaser.Physics.Arcade.Body;
+  private playerAvatar?: Phaser.GameObjects.Container;
   private interactionZone?: Phaser.GameObjects.Zone;
   private interactionPrompt?: Phaser.GameObjects.Text;
   private npcPrompt?: Phaser.GameObjects.Text;
@@ -59,30 +60,32 @@ export class VillageScene extends Phaser.Scene {
       color: "#6b5f5a",
     }).setOrigin(0.5);
 
-    const player = this.add.rectangle(
+    const playerCollider = this.add.rectangle(
       config.playerStart.x,
       config.playerStart.y,
       config.playerSize.width,
       config.playerSize.height,
       config.colors.player
     );
-    player.setDepth(2);
-    this.physics.add.existing(player);
+    playerCollider.setAlpha(0);
+    playerCollider.setDepth(2);
+    this.physics.add.existing(playerCollider);
 
-    const playerBody = player.body as Phaser.Physics.Arcade.Body;
+    const playerBody = playerCollider.body as Phaser.Physics.Arcade.Body;
     playerBody.setCollideWorldBounds(true);
     playerBody.setSize(config.playerSize.width, config.playerSize.height, true);
     playerBody.setMaxVelocity(config.playerSpeed, config.playerSpeed);
 
-    this.player = player;
+    this.player = playerCollider;
     this.playerBody = playerBody;
+    this.playerAvatar = createPlayerAvatar(this, config, playerCollider.x, playerCollider.y);
 
     const obstacles = config.obstacles.map((obstacle) => createStaticObstacle(this, obstacle));
-    obstacles.forEach((obstacle) => this.physics.add.collider(player, obstacle));
+    obstacles.forEach((obstacle) => this.physics.add.collider(playerCollider, obstacle));
 
     this.npcColliders = config.npcs.map((npc) => createNpc(this, npc, config.colors));
     this.npcLookup = new Map(config.npcs.map((npc) => [npc.id, npc]));
-    this.npcColliders.forEach((collider) => this.physics.add.collider(player, collider));
+    this.npcColliders.forEach((collider) => this.physics.add.collider(playerCollider, collider));
 
     const interaction = config.interactionTarget;
     this.add.rectangle(
@@ -143,7 +146,7 @@ export class VillageScene extends Phaser.Scene {
       this.interactKeys = controls.interactKeys;
     }
 
-    this.cameras.main.startFollow(player, true, config.cameraLerp, config.cameraLerp);
+    this.cameras.main.startFollow(playerCollider, true, config.cameraLerp, config.cameraLerp);
 
     const unsubscribeClose = onDialogueClose(() => {
       this.isDialogueOpen = false;
@@ -164,6 +167,10 @@ export class VillageScene extends Phaser.Scene {
 
     this.applyMovement();
     this.updateInteractionState();
+
+    if (this.playerAvatar && this.player) {
+      this.playerAvatar.setPosition(this.player.x, this.player.y);
+    }
   }
 
   private applyMovement() {
@@ -695,6 +702,7 @@ function createNpc(
   blush.setAlpha(0.8);
 
   npcContainer.add([shadow, body, belly, leftEye, rightEye, blush]);
+  npcContainer.add(createNpcAccessory(scene, npc, colors));
 
   const nameTag = scene.add.text(0, -npc.size.height * 0.9, npc.name, {
     fontFamily: "Nunito, system-ui, sans-serif",
@@ -735,6 +743,196 @@ function createNpc(
   collider.setData("npcId", npc.id);
 
   return collider;
+}
+
+function createPlayerAvatar(
+  scene: Phaser.Scene,
+  config: SceneConfig,
+  x: number,
+  y: number
+): Phaser.GameObjects.Container {
+  const { playerSize, colors } = config;
+  const avatar = scene.add.container(x, y);
+  avatar.setDepth(3);
+
+  const shadow = scene.add.ellipse(
+    0,
+    playerSize.height * 0.45,
+    playerSize.width * 0.7,
+    playerSize.height * 0.28,
+    colors.npcShadow
+  );
+  shadow.setAlpha(0.3);
+
+  const dress = scene.add.ellipse(
+    0,
+    playerSize.height * 0.18,
+    playerSize.width * 0.95,
+    playerSize.height * 0.9,
+    colors.playerOutfit
+  );
+  const dressAccent = scene.add.ellipse(
+    0,
+    playerSize.height * 0.25,
+    playerSize.width * 0.6,
+    playerSize.height * 0.45,
+    colors.playerOutfitAccent
+  );
+  dressAccent.setAlpha(0.9);
+
+  const head = scene.add.circle(
+    0,
+    -playerSize.height * 0.18,
+    playerSize.width * 0.3,
+    colors.playerSkin
+  );
+
+  const hair = scene.add.ellipse(
+    0,
+    -playerSize.height * 0.27,
+    playerSize.width * 0.8,
+    playerSize.height * 0.6,
+    colors.playerHair
+  );
+
+  const fringe = scene.add.ellipse(
+    0,
+    -playerSize.height * 0.32,
+    playerSize.width * 0.7,
+    playerSize.height * 0.3,
+    adjustColor(colors.playerHair, -18)
+  );
+
+  const leftEye = scene.add.circle(
+    -playerSize.width * 0.12,
+    -playerSize.height * 0.2,
+    playerSize.width * 0.05,
+    0x4f443c
+  );
+  const rightEye = scene.add.circle(
+    playerSize.width * 0.12,
+    -playerSize.height * 0.2,
+    playerSize.width * 0.05,
+    0x4f443c
+  );
+
+  const blush = scene.add.circle(
+    playerSize.width * 0.18,
+    -playerSize.height * 0.1,
+    playerSize.width * 0.06,
+    0xf0a2b4
+  );
+  blush.setAlpha(0.7);
+
+  const bow = scene.add.triangle(
+    -playerSize.width * 0.18,
+    -playerSize.height * 0.5,
+    0,
+    8,
+    10,
+    0,
+    10,
+    16,
+    adjustColor(colors.playerOutfit, -12)
+  );
+
+  avatar.add([shadow, dress, dressAccent, hair, fringe, head, leftEye, rightEye, blush, bow]);
+  return avatar;
+}
+
+function createNpcAccessory(
+  scene: Phaser.Scene,
+  npc: NpcConfig,
+  colors: SceneConfig["colors"]
+): Phaser.GameObjects.GameObject[] {
+  const offsetX = npc.size.width * 0.45;
+  const offsetY = npc.size.height * 0.1;
+
+  switch (npc.accessory) {
+    case "garden": {
+      const leaf = scene.add.ellipse(
+        offsetX,
+        offsetY - 6,
+        npc.size.width * 0.28,
+        npc.size.height * 0.18,
+        adjustColor(npc.colors.accent, -12)
+      );
+      const stem = scene.add.rectangle(
+        offsetX,
+        offsetY + 6,
+        2,
+        10,
+        adjustColor(colors.treeTrunk, -12)
+      );
+      return [leaf, stem];
+    }
+    case "craft": {
+      const head = scene.add.rectangle(
+        offsetX,
+        offsetY - 6,
+        14,
+        6,
+        adjustColor(npc.colors.accent, -20)
+      );
+      const handle = scene.add.rectangle(
+        offsetX + 4,
+        offsetY + 6,
+        3,
+        14,
+        adjustColor(colors.signPost, -30)
+      );
+      return [head, handle];
+    }
+    case "market": {
+      const basket = scene.add.rectangle(
+        offsetX,
+        offsetY + 4,
+        16,
+        10,
+        adjustColor(colors.path, -10)
+      );
+      const handle = scene.add.ellipse(
+        offsetX,
+        offsetY - 2,
+        16,
+        10,
+        adjustColor(colors.path, -24)
+      );
+      handle.setAlpha(0.6);
+      const fruit = scene.add.circle(
+        offsetX - 4,
+        offsetY + 4,
+        2,
+        0xe97f9a
+      );
+      return [basket, handle, fruit];
+    }
+    case "hall":
+    default: {
+      const paper = scene.add.rectangle(
+        offsetX,
+        offsetY + 2,
+        14,
+        16,
+        colors.signBoard
+      );
+      const line1 = scene.add.rectangle(
+        offsetX,
+        offsetY - 4,
+        10,
+        2,
+        adjustColor(colors.signPost, -20)
+      );
+      const line2 = scene.add.rectangle(
+        offsetX,
+        offsetY + 2,
+        8,
+        2,
+        adjustColor(colors.signPost, -20)
+      );
+      return [paper, line1, line2];
+    }
+  }
 }
 
 function createNpcSign(scene: Phaser.Scene, npc: NpcConfig, colors: SceneConfig["colors"]) {

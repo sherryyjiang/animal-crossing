@@ -43,3 +43,11 @@ test("places NPC colliders outside obstacle rectangles", () => {
     }
   }
 });
+
+test("each NPC provides an accessory icon key", () => {
+  const config = getSceneConfig();
+  for (const npc of config.npcs) {
+    const accessory = (npc as { accessory?: string }).accessory;
+    assert.ok(accessory);
+  }
+});
